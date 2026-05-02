@@ -1,0 +1,12 @@
+{
+  "name": "Adventures",
+  "details": "Gamification for Trello",
+  "capabilities": [
+    "board-buttons"
+  ],
+  "connectorUrl": "https://advplugtrello.netlify.app",
+  "icon": {
+    "url": "https://cdn-icons-png.flaticon.com/512/2618/2618245.png"
+  },
+  "author": "gianmnaut"
+}
