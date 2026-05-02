@@ -648,6 +648,7 @@ const t = window.TrelloPowerUp.iframe({
   appName: 'Adventures Boss Fight'
 });
 let trelloListsCache = [];
+let trelloListNames = []; // Questa salverà i nomi delle colonne ("BACKLOG", "SVILUPPO", ecc.)
 /* ════════════════════════════════════════════════
    PIXEL ART HELPERS
 ════════════════════════════════════════════════ */
@@ -1282,28 +1283,48 @@ function buildParty(){
 /* ═══════════════ QUEST LOG ═════════════════════ */
 function buildQL(){
   document.getElementById('qlStory').textContent=T().story;
-  [0,1,2].forEach(col=>{
-    const el=document.getElementById('qlC'+col);const head=el.querySelector('.qlColH');el.innerHTML='';el.appendChild(head);
-    T().q.forEach((q,i)=>{
-      // Map: 0→col0, 1&2→col1, 3→col2
-      const qlCol=q.st===3?2:q.st>=1?1:0;
-      if(qlCol!==col)return;
-      const st=q.st||0;const d=document.createElement('div');
-      d.className='qlItem'+(st===3?' qlDn':'');d.dataset.idx=i;
-      const ckCls=st===3?'ckDn':st>=1?'ckD':'ckT';const ckTx=st===3?'✓':st>=1?'▶':'';
+  const qlCols = document.getElementById('qlCols');
+  qlCols.innerHTML = ''; // Svuotiamo le vecchie colonne finte
+  
+  // Usiamo le liste di Trello (se ci sono), altrimenti fallback
+  const columns = trelloListNames.length > 0 ? trelloListNames : ['TO DO', 'IN CORSO', 'DONE'];
+
+  columns.forEach((colName, colIdx) => {
+    // Calcoliamo i colori in base a se è la prima, l'ultima o una in mezzo
+    const isLast = colIdx === columns.length - 1;
+    const hClass = colIdx === 0 ? 'htd' : isLast ? 'hdn' : 'hdo';
+
+    // Disegniamo la colonna
+    const colDiv = document.createElement('div');
+    colDiv.className = 'qlCol';
+    colDiv.id = 'qlC' + colIdx;
+    colDiv.innerHTML = `<div class="qlColH ${hClass}">${colName}</div>`;
+
+    // Inseriamo i task che appartengono a questa colonna
+    T().q.forEach((q, i) => {
+      const st = q.st || 0;
+      if (st !== colIdx) return;
+      
+      const isDoneTask = st === columns.length - 1; // È nell'ultima colonna?
+      
+      const d=document.createElement('div');
+      d.className='qlItem'+(isDoneTask?' qlDn':'');d.dataset.idx=i;
+      
+      const ckCls=isDoneTask?'ckDn':st>=1?'ckD':'ckT';const ckTx=isDoneTask?'✓':st>=1?'▶':'';
       const bdgCls=q.cls==='DPS'?'bDPS':q.cls==='HEALER'?'bHEAL':'bTANK';
       const ic=q.cls==='DPS'?'⚔':q.cls==='HEALER'?'💊':'🛡';
       const priM=PRI_MULT[q.pri]||1;
-      const dmgH=q.cls==='DPS'?`⚔ ${Math.round((q.d||2)*mult*priM)}dmg (×${priM})`:q.cls==='HEALER'?`+${q.s||2} stabilità`:'🛡 scudo 10s';
-      const stHint=st===3?'↩ REWORK':st===2?'→ DONE + danno':st===1?'→ Done + danno':'→ Doing';
+      const dmgH=q.cls==='DPS'?`⚔ ${Math.round((q.d||2)*mult*priM)}dmg`:q.cls==='HEALER'?`+${q.s||2} stabilità`:'🛡 scudo';
       const nm=q.boring?q.t:q.ep;
       
-      // La riga modificata con il pulsante "Matita" (✏️)
-      d.innerHTML=`<div class="qlTop"><span class="qlCk ${ckCls}">${ckTx}</span><span class="qlBdg ${bdgCls}">${ic} ${q.cls}</span><span class="qlBdg" style="background:rgba(255,165,0,.15);color:#f5a623;border:1px solid rgba(255,165,0,.2)">${PRI_INFO[q.pri]?.icon||'🟡'}</span><button onclick="event.stopPropagation();openDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:10px;margin-left:auto;color:#8888cc" title="Modifica task">✏️</button></div><div class="qlTxt">${nm}</div><div class="qlHint">${stHint} · ${dmgH}</div>`;
+      d.innerHTML=`<div class="qlTop"><span class="qlCk ${ckCls}">${ckTx}</span><span class="qlBdg ${bdgCls}">${ic} ${q.cls}</span><span class="qlBdg" style="background:rgba(255,165,0,.15);color:#f5a623;border:1px solid rgba(255,165,0,.2)">${PRI_INFO[q.pri]?.icon||'🟡'}</span><button onclick="event.stopPropagation();openDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:10px;margin-left:auto;color:#8888cc" title="Modifica task">✏️</button></div><div class="qlTxt">${nm}</div><div class="qlHint">${dmgH}</div>`;
       
-      if(st!==3)d.onclick=()=>advanceGame(i);
-      el.appendChild(d);
+      // Se non è ancora finito, gli diamo la funzione per farlo avanzare
+      if(!isDoneTask) d.onclick=()=>advanceGame(i);
+      colDiv.appendChild(d);
     });
+    
+    qlCols.appendChild(colDiv);
   });
 }
 
@@ -1365,20 +1386,46 @@ function buildCard(q,i){
 }
 
 function rebuildWork(){
-  [0,1,2,3,4].forEach(n=>{const el=document.getElementById('wB'+n);if(el)el.innerHTML='';});
-  const counts=[0,0,0,0,0];
+  const kbW = document.getElementById('kbW');
+  if (kbW) {
+    kbW.innerHTML = ''; // Svuotiamo le colonne vecchie
+    
+    const columns = trelloListNames.length > 0 ? trelloListNames : ['TO DO', 'DOING', 'DONE'];
+
+    columns.forEach((colName, n) => {
+      const isLast = n === columns.length - 1;
+      const hClass = n === 0 ? 'hTd' : isLast ? 'hDn' : 'hDo';
+      const nClass = n === 0 ? '' : isLast ? 'nDn' : 'nDo';
+
+      const kCol = document.createElement('div');
+      kCol.className = 'kCol';
+      kCol.innerHTML = `<div class="kColH ${hClass}">${colName}<span class="kColN ${nClass}" id="wN${n}">0</span></div><div class="kColB" id="wB${n}" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,${n})"></div>`;
+      kbW.appendChild(kCol);
+    });
+  }
+
+  // Distribuiamo le card e contiamole
+  const counts = {};
   T().q.forEach((q,i)=>{
-    const st=q.st||0;const col=document.getElementById('wB'+st);
-    if(col){col.appendChild(buildCard(q,i));counts[st]++;}
+    const st=q.st||0;
+    const col=document.getElementById('wB'+st);
+    if(col){ col.appendChild(buildCard(q,i)); counts[st] = (counts[st]||0) + 1; }
   });
-  [0,1,2,3,4].forEach(n=>{const el=document.getElementById('wN'+n);if(el)el.textContent=counts[n];});
-  // List view
+
+  // Scriviamo i contatori sopra le colonne
+  Object.keys(counts).forEach(n=>{
+    const el=document.getElementById('wN'+n); if(el) el.textContent=counts[n];
+  });
+
+  // Aggiorna anche la vista a "Lista"
   const tbody=document.getElementById('lstBody');if(!tbody)return;tbody.innerHTML='';
   T().q.forEach((q,i)=>{
     const pi=PRI_INFO[q.pri]||PRI_INFO.M;const ii=ISSUE_INFO[q.type]||ISSUE_INFO.task;
-    const stLblMap=['sTd','sDo','sRv','sDn','sPa'];const stTextMap=ST_LBL;
-    const stClass=stLblMap[q.st||0]||'sTd';const stText=stTextMap[q.st||0]||'To Do';
     const rc=q.raci;
+    const isLast = (q.st||0) === (trelloListNames.length - 1);
+    const stClass= q.st === 0 ? 'sTd' : isLast ? 'sDn' : 'sDo';
+    const stText = trelloListNames[q.st||0] || 'Task';
+    
     const tr=document.createElement('tr');
     tr.innerHTML=`<td>${ii.icon} <span class="tag ${q.tag}">${q.tagL}</span></td><td>${q.t}</td><td>${rc.R}</td><td><span class="sB ${stClass}">${stText}</span></td><td>${pi.icon}</td><td style="font-size:10px;color:#8b8b9e">${q.spent}/${q.est}</td><td style="font-size:10px"><span class="rR" style="font-size:8px">R:${rc.R.substring(0,2)}</span> <span class="rA" style="font-size:8px">A:${rc.A.substring(0,2)}</span></td>`;
     tr.addEventListener('click',()=>advanceWork(i));
@@ -1863,6 +1910,7 @@ async function syncFromTrello() {
     // Ordina le liste da sinistra a destra e salvale nella cache globale
     lists.sort((a, b) => a.pos - b.pos);
     trelloListsCache = lists.map(l => l.id); 
+    trelloListNames = lists.map(l => l.name.toUpperCase()); // Salviamo anche i nomi in maiuscolo
 
     T().q = cards.map(c => {
       // Troviamo in che colonna si trova attualmente (da 0 a X)
