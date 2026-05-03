@@ -1924,7 +1924,7 @@ async function syncFromTrello() {
       return {
         idTrello: c.id,  // FONDAMENTALE: Salviamo l'ID reale della Card
         t: c.name, 
-        ep: 'Trello Task', 
+        ep: c.name, 
         cls: 'DPS', 
         d: 2, 
         s: 0,
@@ -1935,7 +1935,7 @@ async function syncFromTrello() {
         st: state,
         cover: null,
         subtasks: [], comments: [],
-        due: '', doing_at: null, done_at: null, dmgDealt: 0, boring: true
+        due: '', doing_at: null, done_at: null, dmgDealt: 0, boring: false
       };
     });
 
