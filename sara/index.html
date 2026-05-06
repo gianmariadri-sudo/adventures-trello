@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>⚔ Adventures v7</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/frappe-gantt/0.6.1/frappe-gantt.css">
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+body{font-family:'Press Start 2P',monospace;background:#06060f;color:#ddddf0;overflow:hidden}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#f0f1f3}::-webkit-scrollbar-thumb{background:#c1c7d0;border-radius:2px}
+
+/* ══ WORK VIEW ══════════════════════════════════════════════ */
+#wv{background:#f4f5f7;height:100vh;display:flex;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.wTop{display:flex;align-items:center;gap:8px;height:52px;padding:0 16px;background:#fff;border-bottom:1px solid #dfe1e6;box-shadow:0 1px 4px rgba(9,30,66,.1);flex-shrink:0}
+.wLogo{font-size:16px;font-weight:900;color:#0052cc}
+.wNav{font-size:13px;color:#6b778c;padding:6px 10px;border-radius:3px;cursor:pointer;border:none;background:none;transition:.15s;font-family:inherit}
+.wNav:hover{background:#f4f5f7;color:#172b4d}
+#aBtn{font-family:'Press Start 2P',monospace;font-size:7px;padding:10px 16px;background:#050000;color:#ff2200;border:2.5px solid #8b0000;cursor:pointer;letter-spacing:2px;margin-left:auto;text-shadow:2px 2px 0 #550000,0 0 14px rgba(255,40,0,.9);box-shadow:0 0 18px rgba(200,0,0,.35);border-radius:3px;animation:aBP 2s ease-in-out infinite alternate;position:relative;overflow:hidden;white-space:nowrap;transition:transform .15s}
+#aBtn::before{content:'';position:absolute;bottom:0;left:-80%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,80,0,.15),transparent);animation:aFl 2s linear infinite}
+#aBtn:hover{transform:scale(1.05);border-color:#ff4400}
+@keyframes aBP{from{box-shadow:0 0 8px rgba(180,0,0,.3)}to{box-shadow:0 0 35px rgba(255,0,0,.65)}}
+@keyframes aFl{from{left:-80%}to{left:140%}}
+
+/* Sprint / Loot bar */
+#sprintStrip{display:flex;align-items:center;gap:10px;padding:5px 16px;background:#fff;border-bottom:1px solid #dfe1e6;flex-shrink:0;height:36px}
+.spLbl{font-size:10px;font-weight:700;color:#42526e;white-space:nowrap}
+.spBarWrap{flex:1}.spTrack{height:7px;background:#ebecf0;border-radius:4px;overflow:hidden}
+#spFill{height:100%;background:linear-gradient(90deg,#0052cc,#4c9aff);border-radius:4px;transition:width .5s;width:0%}
+.spPct{font-size:10px;font-weight:700;color:#0052cc;white-space:nowrap}
+.spDiv{width:1px;height:20px;background:#dfe1e6;flex-shrink:0}
+.ltLbl{font-size:10px;font-weight:700;color:#ff991f;white-space:nowrap}
+.ltBarWrap{width:120px;flex-shrink:0}.ltTrack{height:7px;background:#fff3e0;border-radius:4px;overflow:hidden;border:1px solid #ffcc66}
+#ltFill{height:100%;background:linear-gradient(90deg,#b35f00,#f5c518);border-radius:4px;transition:width .5s;width:0%}
+.ltPct{font-size:10px;font-weight:700;color:#ff991f;white-space:nowrap}
+
+/* Tabs */
+.wTabs{display:flex;padding:0 16px;background:#fff;border-bottom:1px solid #dfe1e6;flex-shrink:0}
+.wTab{font-size:12px;padding:10px 14px;color:#6b778c;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;font-family:inherit;transition:.15s}
+.wTab.active{color:#0052cc;border-bottom-color:#0052cc;font-weight:600}
+
+/* Kanban */
+.kbWrap{display:flex;gap:10px;padding:12px;flex:1;overflow-x:auto;align-items:flex-start;background:#f4f5f7}
+.kCol{background:#ebecf0;border-radius:5px;width:235px;min-width:235px;flex-shrink:0;transition:box-shadow .2s}
+.kColH{padding:9px 11px;font-size:11px;font-weight:700;color:#172b4d;display:flex;justify-content:space-between;align-items:center;border-radius:5px 5px 0 0}
+.kColN{font-size:10px;background:#c5cae9;border-radius:10px;padding:1px 7px;color:#42526e}
+.kColB{padding:0 6px 6px;display:flex;flex-direction:column;gap:5px;min-height:80px;transition:background .2s;border-radius:0 0 5px 5px}
+.kColB.drag-over{background:rgba(0,82,204,.06);box-shadow:inset 0 0 0 2px rgba(0,82,204,.35)}
+/* Column header tints */
+.hTd{background:#f0f1ff;border-bottom:2px solid #c5cae9}.hDo{background:#fff8e0;border-bottom:2px solid #ffe082}.hRv{background:#fff3e8;border-bottom:2px solid #ffcc80}.hDn{background:#e8fff2;border-bottom:2px solid #a5d6a7}
+.nDo{background:#ffe082!important;color:#7a4f00!important}.nRv{background:#ffcc80!important;color:#6d4c00!important}.nDn{background:#a5d6a7!important;color:#1b5e20!important}
+
+/* Card */
+.kCard{background:#fff;border-radius:4px;cursor:grab;box-shadow:0 1px 2px rgba(9,30,66,.14);transition:.18s;border-left:4px solid transparent;position:relative;overflow:visible}
+.kCard:hover{box-shadow:0 4px 14px rgba(9,30,66,.22);transform:translateY(-1px)}
+.kCard.dragging{opacity:.45;transform:rotate(2deg);box-shadow:0 8px 24px rgba(9,30,66,.28)}
+.kCard.priU{border-left-color:#de350b}.kCard.priH{border-left-color:#ff5630}.kCard.priM{border-left-color:#ff991f}.kCard.priL{border-left-color:#36b37e}
+/* Cover bar */
+.kCover{height:4px;border-radius:0 0 0 0;margin:-0px;background:transparent}
+.kCover.visible{height:8px}
+.kCardBody{padding:8px 10px 7px}
+.kTx{font-size:12px;color:#172b4d;line-height:1.45;margin-bottom:5px;font-weight:500;display:flex;align-items:flex-start;gap:4px}
+.kTxText{flex:1}
+.issueIco{font-size:11px;flex-shrink:0;margin-top:1px}
+.kExpand{font-size:10px;background:none;border:none;cursor:pointer;color:#6b778c;padding:2px 4px;border-radius:3px;margin-left:auto;flex-shrink:0;transition:.15s;line-height:1}
+.kExpand:hover{background:#f4f5f7;color:#172b4d}
+.kMeta{display:flex;align-items:center;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+.tag{font-size:9px;padding:2px 6px;border-radius:3px;font-weight:700}
+.tD{background:#e8f0fe;color:#1a56cc}.tDes{background:#fce8ff;color:#8b15cc}.tQ{background:#e8fff2;color:#0a6640}.tP{background:#fff3e0;color:#b35f00}.tBug{background:#ffebe6;color:#bf2600}
+.priBdg{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700}
+.priU{background:#ffebe6;color:#de350b}.priH{background:#fff0e6;color:#bf2600}.priM{background:#fffae6;color:#974f0c}.priL{background:#e3fcef;color:#006644}
+.kAv{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#fff}
+.avC{background:#e53935}.avS{background:#43a047}.avM{background:#1e88e5}.avG{background:#8e24aa}
+.ttxt{font-size:9px;color:#8b8b9e;margin-bottom:3px}
+.raci{display:flex;gap:3px;margin-bottom:3px;flex-wrap:wrap}
+.rR,.rA,.rC,.rI{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700}
+.rR{background:#ffebe6;color:#bf2600}.rA{background:#fff3e0;color:#974f0c}.rC{background:#e8f0fe;color:#1a56cc}.rI{background:#f4f5f7;color:#42526e}
+/* Subtask progress */
+.stProg{margin-bottom:3px}.stProgRow{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+.stProgTx{font-size:8px;color:#6b778c}.stProgBar{flex:1;height:4px;background:#ebecf0;border-radius:2px;overflow:hidden}
+.stProgFill{height:100%;background:#0052cc;border-radius:2px;transition:width .3s}
+/* Due badge */
+.dueBdg{display:inline-block;font-size:8px;padding:1px 6px;border-radius:3px;font-weight:700;margin-bottom:3px}
+.dueOk{background:#e3fcef;color:#006644}.dueSoon{background:#fffae6;color:#974f0c}.dueOver{background:#ffebe6;color:#bf2600;animation:blinkRed 1.2s ease-in-out infinite alternate}
+@keyframes blinkRed{from{opacity:.7}to{opacity:1;box-shadow:0 0 4px rgba(191,38,0,.3)}}
+/* Time tracking badge */
+.timeBdg{font-size:8px;color:#5e6c84;background:#f4f5f7;padding:1px 5px;border-radius:3px;display:inline-block;margin-bottom:2px}
+/* State hint */
+.stateHint{font-size:8px;color:#aaa;margin-top:3px;font-style:italic}
+
+/* Lista */
+.lstWrap{padding:12px;flex:1;display:none;background:#f4f5f7;overflow-y:auto}
+.lstT{width:100%;border-collapse:collapse;background:#fff;border-radius:4px;border:1px solid #dfe1e6;font-size:12px}
+.lstT th{font-size:10px;color:#6b778c;font-weight:700;padding:8px 10px;background:#f4f5f7;border-bottom:1px solid #dfe1e6;text-align:left}
+.lstT td{color:#172b4d;padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.lstT tr:hover td{background:#f8f9fa;cursor:pointer}
+.sB{font-size:10px;font-weight:700;padding:2px 7px;border-radius:3px;display:inline-block}
+.sTd{background:#f4f5f7;color:#42526e}.sDo{background:#fffae6;color:#974f0c}.sRv{background:#fff3e8;color:#7a4400}.sDn{background:#e3fcef;color:#006644}
+
+/* Burndown */
+.bdWrap{flex:1;padding:16px;background:#f4f5f7;display:none;overflow:hidden}
+.bdBox{background:#fff;border-radius:6px;padding:16px;height:100%;box-shadow:0 1px 3px rgba(9,30,66,.1);display:flex;flex-direction:column}
+.bdTl{font-size:13px;font-weight:700;color:#172b4d;margin-bottom:4px}
+.bdSub{font-size:11px;color:#6b778c;margin-bottom:14px}
+.bdChartWrap{flex:1;position:relative;min-height:0}
+
+/* Work Flash */
+#wFlash{position:fixed;right:-300px;top:90px;z-index:300;transition:right .35s cubic-bezier(.34,1.56,.64,1)}
+#wFlash.show{right:12px}
+#wFlashIn{background:#050010;border:2px solid #ff2200;border-radius:5px;padding:9px 14px;font-family:'Press Start 2P',monospace;font-size:7px;color:#ff4400;text-shadow:0 0 10px #ff4400;box-shadow:0 0 20px rgba(255,40,0,.4);display:flex;align-items:center;gap:7px;white-space:nowrap}
+
+/* ══ DETAIL PANEL ═══════════════════════════════════════════ */
+#detailPanel{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:#fff;border-left:1px solid #dfe1e6;z-index:250;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1);overflow:hidden;box-shadow:-4px 0 20px rgba(9,30,66,.12)}
+#detailPanel.open{right:0}
+#dpHead{padding:14px 16px;border-bottom:1px solid #dfe1e6;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#dpClose{font-size:18px;background:none;border:none;cursor:pointer;color:#6b778c;padding:2px 6px;border-radius:3px;line-height:1}
+#dpClose:hover{background:#f4f5f7;color:#172b4d}
+#dpTitle{font-size:14px;font-weight:700;color:#172b4d;flex:1;line-height:1.4}
+#dpBody{flex:1;overflow-y:auto;padding:16px}
+.dpSection{margin-bottom:16px}
+.dpSectionTl{font-size:10px;font-weight:700;color:#42526e;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f0f0f0;text-transform:uppercase;letter-spacing:.5px}
+/* Cover swatches */
+.coverSwatches{display:flex;gap:6px;flex-wrap:wrap}
+.coverSw{width:28px;height:20px;border-radius:3px;cursor:pointer;border:2px solid transparent;transition:.15s}
+.coverSw:hover,.coverSw.active{border-color:#0052cc;transform:scale(1.1)}
+.coverSwNone{background:#f4f5f7;border:2px dashed #c1c7d0;display:flex;align-items:center;justify-content:center;font-size:10px;color:#6b778c}
+/* Issue type selector */
+.issueGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.issuePk{border:1.5px solid #dfe1e6;background:#fff;border-radius:4px;padding:6px 8px;cursor:pointer;font-size:11px;font-family:inherit;transition:.15s;text-align:left}
+.issuePk:hover,.issuePk.active{border-color:#0052cc;background:#e8f0fe;color:#0052cc}
+/* Priority selector */
+.priGrid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.priPk{border:1.5px solid #dfe1e6;background:#fff;border-radius:4px;padding:6px 8px;cursor:pointer;font-size:11px;font-family:inherit;transition:.15s;text-align:left;display:flex;justify-content:space-between;align-items:center}
+.priPk:hover,.priPk.active{border-color:#0052cc;background:#e8f0fe}
+/* Subtasks */
+.stItem{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f4f5f7}
+.stCk{width:14px;height:14px;border:2px solid #c1c7d0;border-radius:3px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:.15s}
+.stCk.done{background:#0052cc;border-color:#0052cc;color:#fff}
+.stCkTx{font-size:12px;color:#172b4d;flex:1}.stCkTx.done{text-decoration:line-through;color:#6b778c}
+.dpAddInput{width:100%;font-size:12px;padding:6px 8px;border:1.5px solid #dfe1e6;border-radius:4px;font-family:inherit;outline:none;margin-top:6px}
+.dpAddInput:focus{border-color:#0052cc}
+.dpAddBtn{font-size:11px;padding:5px 10px;background:#0052cc;color:#fff;border:none;border-radius:3px;cursor:pointer;margin-top:5px;font-family:inherit}
+/* Comments */
+.cmItem{padding:8px;background:#f4f5f7;border-radius:4px;margin-bottom:6px}
+.cmAuthor{font-size:10px;font-weight:700;color:#172b4d;margin-bottom:2px}
+.cmTxt{font-size:11px;color:#42526e;line-height:1.5}
+.cmTs{font-size:9px;color:#97a0af;margin-top:2px}
+/* Time tracking */
+.ttRow{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:#42526e;border-bottom:1px solid #f4f5f7}
+.ttLbl{font-weight:600;color:#172b4d}
+/* RACI legend */
+.raciLeg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.raciItem{padding:6px 8px;border-radius:4px;font-size:11px}
+
+/* ══ GAME VIEW ══════════════════════════════════════════════ */
+#gv{display:none;flex-direction:row;height:100vh;overflow:hidden;position:relative}
+#gv.on{display:flex}
+#ql{width:340px;min-width:340px;background:#03030c;border-right:2px solid #0f0f22;display:flex;flex-direction:column;overflow:hidden;z-index:5}
+#qlH{padding:10px 12px 8px;background:#05050f;border-bottom:1px solid #0f0f22;flex-shrink:0}
+.qlTitle{font-size:11px;color:#f5a623;letter-spacing:1.5px;text-shadow:0 0 12px rgba(245,166,35,.45)}
+#qlStory{font-size:8px;line-height:2.4;color:#55558a;padding:8px 10px;background:rgba(255,255,255,.018);border-left:2px solid #f5a62355;margin:6px 8px;border-radius:2px;flex-shrink:0;font-family:-apple-system,sans-serif}
+#qlCols{display:flex;gap:0;flex:1;overflow-y:auto;padding:4px 4px 8px;min-height:0}
+.qlCol{flex:1;padding:0 3px;overflow-y:auto;min-width:0}
+.qlColH{font-size:8px;margin-bottom:5px;padding:5px;border-radius:2px;letter-spacing:.5px;text-align:center;border-bottom:1.5px solid transparent}
+.qlColH.htd{color:#44446a;border-color:#22223a}.qlColH.hdo{color:#f5a623;border-color:#f5a62344}.qlColH.hdn{color:#44dd88;border-color:#44dd8844}
+.qlItem{background:rgba(255,255,255,.025);border:1px solid #0f0f22;border-radius:3px;padding:6px 5px;margin-bottom:4px;cursor:pointer;transition:border-color .2s,background .2s}
+.qlItem:hover:not(.qlDn){border-color:rgba(245,166,35,.3);background:rgba(255,255,255,.05)}
+.qlItem.glitch{animation:glitchIn .55s ease forwards}
+.qlDn{opacity:.3;cursor:default}
+.qlTop{display:flex;align-items:center;gap:4px;margin-bottom:4px;flex-wrap:wrap}
+.qlCk{width:12px;height:12px;border:2px solid #1a1a2a;border-radius:2px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
+.ckT{border-color:#22223a}.ckD{border-color:#f5a623;color:#f5a623;background:rgba(245,166,35,.1)}.ckDn{background:#44dd88;border-color:#44dd88;color:#000}
+.qlBdg{font-size:8px;padding:2px 5px;border-radius:2px;display:inline-block;flex-shrink:0}
+.bDPS{background:rgba(200,30,50,.22);color:#ff6677;border:1px solid #ff557722}.bHEAL{background:rgba(30,200,100,.18);color:#44dd88;border:1px solid #44dd8822}.bTANK{background:rgba(30,80,200,.18);color:#77aaff;border:1px solid #5599ff22}
+.qlTxt{font-size:10px;color:#b0b0cc;line-height:1.6;font-family:-apple-system,sans-serif;word-break:break-word}
+.qlHint{font-size:7px;margin-top:3px;color:#333355;font-family:-apple-system,sans-serif}
+@keyframes glitchIn{0%{filter:hue-rotate(0)brightness(1);transform:skewX(0)}12%{filter:hue-rotate(200deg)brightness(3);transform:skewX(-6deg);color:#00ffcc}40%{filter:hue-rotate(300deg)brightness(2.5);transform:skewX(-3deg);color:#ff00cc}80%,100%{filter:none;transform:none}}
+#rp{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#scene{flex:1;position:relative;overflow:hidden}
+#bgCanvas{position:absolute;top:0;left:0;width:100%;height:100%}
+#fogLayer{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+.fogF{position:absolute;border-radius:50%;filter:blur(14px)}
+@keyframes fogL{0%{transform:translateX(-120%);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(120%);opacity:0}}
+@keyframes fogR{0%{transform:translateX(120%);opacity:0}8%{opacity:1}92%{opacity:1}100%{transform:translateX(-120%);opacity:0}}
+#partyPanel{position:absolute;left:8px;top:50px;display:flex;flex-direction:column;gap:5px;z-index:6}
+.pmCard{background:rgba(3,3,14,.85);border:1.5px solid rgba(255,255,255,.07);border-radius:4px;padding:5px 7px;display:flex;align-items:center;gap:6px}
+.pmInfo{display:flex;flex-direction:column;gap:3px}
+.pmNm{font-size:9px;color:#ccccdd;font-family:-apple-system,sans-serif}
+.pmCl{font-size:7px;padding:2px 5px;border-radius:2px;display:inline-block}
+.pmHpB{height:3px;background:#080818;border-radius:1px;width:60px;overflow:hidden;border:1px solid #111128}
+.pmHpF{height:100%;border-radius:1px;transition:width .4s}
+#bossHud{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:7;text-align:center;width:260px}
+#bossName{font-size:12px;color:#f5c518;margin-bottom:5px;text-shadow:0 0 14px rgba(245,197,24,.5);letter-spacing:1px}
+.bHpRow{display:flex;gap:2px;height:10px}
+.bSeg{flex:1;background:#080818;border:1px solid #141428;border-radius:1px;transition:background .3s}
+.bSeg.on{background:#4cdd5a;box-shadow:0 0 3px #4cdd5a44}
+.bSeg.on.m{background:#f5c518}.bSeg.on.l{background:#e83a3a;animation:hpD .6s ease-in-out infinite alternate}
+@keyframes hpD{from{opacity:.6}to{opacity:1;box-shadow:0 0 14px #e83a3a}}
+#bossArea{position:absolute;right:18px;top:50%;transform:translateY(-54%);z-index:5}
+#bossWrap{position:relative;animation:bBob 3.8s ease-in-out infinite;transform-origin:center bottom}
+@keyframes bBob{0%,100%{transform:translateY(0)}35%{transform:translateY(-10px)}70%{transform:translateY(4px)}}
+#bossWrap.hit #bossCanvas{animation:bHit .4s steps(3) forwards}
+@keyframes bHit{0%,100%{filter:none}33%,66%{filter:brightness(12) saturate(.3) hue-rotate(290deg)}}
+#shieldDome{position:absolute;bottom:90px;left:8px;width:110px;height:100px;border-radius:50% 50% 40% 40%;border:2.5px solid rgba(85,153,255,.7);background:radial-gradient(ellipse,rgba(85,153,255,.12) 0%,transparent 100%);display:none;z-index:8;animation:domeP 1.2s ease-in-out infinite alternate;pointer-events:none}
+@keyframes domeP{from{box-shadow:0 0 14px rgba(85,153,255,.3)}to{box-shadow:0 0 45px rgba(85,153,255,.7)}}
+#shieldDome.active{display:block}
+#eyeParts{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.eSpark{position:absolute;width:3px;height:3px;border-radius:50%;pointer-events:none}
+#stabWrap{position:absolute;bottom:8px;right:10px;z-index:6;background:rgba(2,2,12,.85);border:1px solid #0f0f22;border-radius:3px;padding:6px 10px}
+.stabLbl{font-size:8px;color:#44dd88;margin-bottom:3px;display:flex;justify-content:space-between;gap:20px}
+.stabRow{display:flex;gap:2px;height:8px}
+.stabSeg{width:16px;background:#060f06;border:1px solid #0e1a0e;border-radius:1px;transition:.3s}
+.stabSeg.on{background:#44dd88;box-shadow:0 0 5px #44dd8866}
+#gNav{position:absolute;top:0;left:0;right:0;height:46px;background:rgba(2,2,12,.9);border-bottom:1px solid #0f0f22;display:flex;align-items:center;gap:6px;padding:0 10px;z-index:10}
+.gNB{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 10px;border:1.5px solid #141430;background:rgba(255,255,255,.02);color:#44445a;cursor:pointer;border-radius:3px;transition:.15s}
+.gNB:hover{border-color:#f5a623;color:#f5a623}
+#gNavTl{font-size:10px;color:#f5a623;letter-spacing:2.5px;text-shadow:0 0 16px rgba(245,166,35,.45);margin:0 auto}
+#hud{width:100%;height:88px;background:rgba(2,2,14,.97);border-top:2px solid #0f0f22;display:flex;align-items:center;gap:10px;padding:0 12px;flex-shrink:0}
+#heroArea{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 8px;border:1.5px solid rgba(255,255,255,.06);border-radius:4px;transition:.2s;flex-shrink:0}
+#heroArea:hover{border-color:rgba(245,166,35,.4);background:rgba(255,255,255,.03)}
+.hNm{font-size:9px;color:#f5a623}
+#hHpW{height:5px;background:#080818;border-radius:2px;width:72px;overflow:hidden;border:1px solid #111128;margin:2px 0}
+#hHpF{height:100%;background:linear-gradient(90deg,#44dd88,#4cdd5a);border-radius:2px;width:80%}
+.hHnt{font-size:7px;color:#2a2a44}
+#skillArea{display:flex;gap:6px;flex-shrink:0}
+.skB{font-family:'Press Start 2P',monospace;font-size:7px;padding:6px 8px;border:1.5px solid #141430;background:rgba(255,255,255,.02);color:#555577;cursor:pointer;border-radius:3px;line-height:2;text-align:center;transition:.2s}
+.skB:hover{border-color:#f5a623;color:#f5a623}
+.skB.shOn{border-color:#5599ff;color:#5599ff;animation:shP .9s ease-in-out infinite alternate}
+@keyframes shP{from{box-shadow:0 0 5px #5599ff22}to{box-shadow:0 0 20px #5599ff77}}
+#mulD{font-size:10px;padding:6px 8px;border-radius:3px;white-space:nowrap;transition:.3s}
+.m1{background:rgba(255,255,255,.02);color:#222244;border:1px solid #141430}
+.m2{background:#1e1400;color:#f5c518;border:1px solid #f5c518;animation:mP .8s ease-in-out infinite alternate}
+@keyframes mP{from{box-shadow:0 0 4px #f5c51844}to{box-shadow:0 0 20px #f5c518aa}}
+#lootW{display:flex;flex-direction:column;gap:4px;margin-left:auto;text-align:right;flex-shrink:0}
+#lootNm{font-size:8px;color:#f5c518}
+#lootTk{width:100px;height:7px;background:#0a0a06;border-radius:2px;overflow:hidden;border:1px solid #222200}
+#lootFl{height:100%;background:linear-gradient(90deg,#7a4a08,#f5c518);transition:width .6s;border-radius:2px}
+#lootCt{font-size:7px;color:#666600}
+.dmgF{position:absolute;pointer-events:none;animation:dmgUp .9s ease forwards;z-index:15;font-family:'Press Start 2P',monospace;font-size:14px}
+@keyframes dmgUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-75px) scale(.5)}}
+#critOv{position:absolute;inset:0;display:none;align-items:center;justify-content:center;z-index:20;pointer-events:none}
+#critOv.on{display:flex;animation:critFl .5s ease forwards}
+@keyframes critFl{0%{background:rgba(255,255,255,.22)}100%{background:transparent}}
+#critTx{font-size:22px;color:#ff2200;text-shadow:3px 3px 0 #660000,0 0 35px #ff4400;animation:critBm .55s cubic-bezier(.34,1.56,.64,1) forwards}
+@keyframes critBm{from{transform:scale(.2) rotate(-10deg);opacity:0}60%{transform:scale(1.2) rotate(2deg);opacity:1}to{transform:scale(1) rotate(0);opacity:1}}
+@keyframes screenShake{0%,100%{transform:translate(0,0)}12%{transform:translate(-9px,3px)}25%{transform:translate(9px,-4px)}50%{transform:translate(6px,-2px)}75%{transform:translate(3px,-1px)}}
+#victScreen{position:absolute;inset:0;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:30;overflow:hidden}
+#victScreen.on{display:flex}
+#coinCanvas{position:absolute;inset:0;pointer-events:none}
+#victC{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 20px;max-width:520px;width:100%}
+.vTl{font-size:16px;color:#f5c518;text-shadow:3px 3px 0 #665500,0 0 35px #f5c518;animation:vPulse 1s ease-in-out infinite alternate;text-align:center;line-height:2}
+@keyframes vPulse{from{opacity:.65}to{opacity:1}}
+.vSub{font-size:10px;color:#aaaacc;text-align:center;line-height:2.4;font-family:-apple-system,sans-serif}
+.lootArt{background:linear-gradient(135deg,#0e0900,#1e1600,#0e0900);border:2px solid #f5c518;border-radius:6px;padding:14px 22px;text-align:center;max-width:360px;width:100%;position:relative;overflow:hidden;box-shadow:0 0 25px rgba(245,197,24,.35)}
+.lootArt::before{content:'';position:absolute;top:-20%;left:-30%;width:40%;height:160%;background:linear-gradient(105deg,transparent,rgba(245,197,24,.13),transparent);animation:lSh 3s ease-in-out infinite}
+@keyframes lSh{0%{left:-30%}100%{left:130%}}
+.lootType{font-size:7px;color:#888800;letter-spacing:2.5px;margin-bottom:7px}
+.lootName{font-size:12px;color:#f5c518;text-shadow:0 0 16px #f5c518;margin-bottom:7px;line-height:2}
+.lootDesc{font-size:9px;color:#aaa877;line-height:2.4;font-family:-apple-system,sans-serif}
+.lootRar{font-size:8px;color:#f5c518;margin-top:8px;letter-spacing:3px;opacity:.8}
+.vBtn{font-family:'Press Start 2P',monospace;font-size:8px;padding:10px 20px;border:2px solid #f5c518;background:transparent;color:#f5c518;cursor:pointer;border-radius:4px;transition:.2s}
+.vBtn:hover{background:rgba(245,197,24,.1)}
+#hrModal{position:absolute;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:35}
+#hrModal.on{display:flex}
+.hrEmail{background:#fff;width:440px;max-width:94%;border-radius:6px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.6);font-family:-apple-system,sans-serif}
+.hrTop{background:linear-gradient(135deg,#003399,#0052cc);padding:14px 18px;display:flex;align-items:center;gap:10px}
+.hrLogo{font-family:'Press Start 2P',monospace;font-size:8px;color:#fff}
+.hrSent{font-size:12px;color:#00e676;font-weight:700;display:flex;align-items:center;gap:5px;margin-left:auto}
+.hrMeta{padding:12px 18px;border-bottom:1px solid #eee}
+.hrMR{display:flex;gap:8px;margin-bottom:5px;font-size:12px;color:#333}
+.hrML{font-weight:700;color:#555;min-width:40px;flex-shrink:0}
+.hrSubj{padding:12px 18px 8px;font-size:15px;font-weight:700;color:#172b4d;border-bottom:1px solid #eee}
+.hrBody{padding:14px 18px;font-size:12px;color:#333;line-height:2}
+.hrBody b{color:#0052cc}
+.hrSig{margin-top:14px;padding-top:10px;border-top:1px solid #eee;font-size:11px;color:#999}
+.hrActs{padding:10px 18px 16px;display:flex;gap:8px;justify-content:flex-end}
+.hrAP{background:#0052cc;color:#fff;border:none;padding:8px 16px;border-radius:3px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600}
+.hrAS{background:#f4f5f7;color:#42526e;border:1px solid #dfe1e6;padding:8px 14px;border-radius:3px;font-size:12px;cursor:pointer;font-family:inherit}
+.tMod{position:absolute;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:40}
+.tMod.on{display:flex}
+.tBox{background:#07071a;border:2px solid #141430;border-radius:8px;padding:20px;max-width:360px;width:94%}
+.tBoxTl{font-size:10px;color:#f5a623;margin-bottom:14px}
+.tGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.tPk{font-family:'Press Start 2P',monospace;font-size:7px;padding:12px 5px;border:1.5px solid #141430;background:#07071a;color:#888899;cursor:pointer;border-radius:4px;text-align:center;line-height:2.5;transition:.2s}
+.tPk:hover,.tPk.act{border-color:#f5a623;color:#f5a623;background:rgba(245,166,35,.05)}
+.tCl{font-family:'Press Start 2P',monospace;font-size:7px;padding:7px 12px;border:1.5px solid #141430;background:transparent;color:#555577;cursor:pointer;border-radius:3px}
+.tCl:hover{border-color:#f5a623;color:#f5a623}
+#transOv{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:16px}
+#transOv.on{display:flex}
+#transTx{font-size:14px;color:#ff2200;text-shadow:2px 2px 0 #660000,0 0 25px rgba(255,40,0,.9);letter-spacing:4px;animation:aBP 1s ease-in-out infinite alternate}
+#transBar{width:220px;height:4px;background:#110000;border-radius:2px;overflow:hidden;border:1px solid #2a0000}
+#transBarFl{height:100%;background:linear-gradient(90deg,#660000,#ff2200);width:0%;animation:tLoad 1.5s ease forwards}
+@keyframes tLoad{0%{width:0%}100%{width:100%}}
+
+/* ══ USER SWITCHER ══════════════════════════════ */
+#userSwitcher{display:flex;align-items:center;gap:6px;padding:4px 10px;border:1.5px solid #dfe1e6;border-radius:20px;background:#fff;cursor:pointer;transition:.15s;flex-shrink:0}
+#userSwitcher:hover{border-color:#0052cc;background:#f4f7ff}
+.uAvatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#fff;flex-shrink:0}
+.uName{font-size:11px;font-weight:600;color:#172b4d}
+.uRole{font-size:9px;padding:1px 5px;border-radius:10px;font-weight:700}
+.roleR{background:#ffebe6;color:#bf2600}.roleA{background:#fffae6;color:#ff8b00}.roleC{background:#e8f0fe;color:#0052cc}.roleI{background:#f4f5f7;color:#42526e}
+/* User modal */
+#userModal{position:fixed;top:58px;right:16px;background:#fff;border:1px solid #dfe1e6;border-radius:8px;box-shadow:0 8px 30px rgba(9,30,66,.18);z-index:200;display:none;min-width:220px;overflow:hidden}
+#userModal.on{display:block}
+.umHead{padding:10px 14px;background:#f4f5f7;border-bottom:1px solid #dfe1e6;font-size:10px;font-weight:700;color:#42526e;text-transform:uppercase;letter-spacing:.5px}
+.umItem{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;transition:.15s;border-bottom:1px solid #f4f5f7}
+.umItem:hover{background:#f4f7ff}
+.umItem.active{background:#e8f0fe}
+.umInfo{display:flex;flex-direction:column;gap:2px}
+.umNm{font-size:12px;font-weight:600;color:#172b4d}
+.umRoles{display:flex;gap:3px;flex-wrap:wrap}
+
+/* ══ PENDING APPROVAL state ═════════════════════ */
+.hPa{background:#fff0f0;border-bottom:2px solid #ff8b8b}.nPa{background:#ff8b8b!important;color:#7a0000!important}
+.sPa{background:#ffebe6;color:#bf2600}
+.kCard.pendingApproval{border-left-color:#de350b;box-shadow:0 0 0 2px rgba(222,53,11,.25),0 1px 2px rgba(9,30,66,.14)}
+.paFlag{display:inline-flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:#bf2600;background:#ffebe6;padding:2px 7px;border-radius:3px;margin-bottom:3px;animation:paPulse 1.5s ease-in-out infinite alternate}
+@keyframes paPulse{from{opacity:.7}to{opacity:1}}
+.permDenied{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#de350b;color:#fff;padding:10px 20px;border-radius:6px;font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;z-index:400;display:none;box-shadow:0 4px 20px rgba(222,53,11,.5);animation:slideUp .3s ease}
+.permDenied.show{display:block}
+@keyframes slideUp{from{transform:translateX(-50%) translateY(20px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}
+
+/* ══ RACI DASHBOARD ═════════════════════════════ */
+.raciWrap{flex:1;overflow-y:auto;padding:16px;background:#f4f5f7;display:none}
+.raciDash{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(9,30,66,.1);overflow:hidden}
+.raciDashHead{padding:14px 18px;border-bottom:1px solid #dfe1e6;display:flex;align-items:center;justify-content:space-between}
+.raciDashTl{font-size:14px;font-weight:700;color:#172b4d}
+.raciLegend{display:flex;gap:10px;flex-wrap:wrap}
+.raciLegItem{display:flex;align-items:center;gap:5px;font-size:11px;color:#42526e;font-family:-apple-system,sans-serif}
+.raciLegDot{width:10px;height:10px;border-radius:50%}
+.raciTable{width:100%;border-collapse:collapse}
+.raciTable th{font-size:10px;font-weight:700;padding:10px 12px;text-align:left;border-bottom:2px solid #dfe1e6;position:sticky;top:0;z-index:2;white-space:nowrap}
+.raciTable td{padding:9px 12px;border-bottom:1px solid #f0f0f0;font-size:12px;font-family:-apple-system,sans-serif;vertical-align:middle}
+.raciTable tr:hover td{background:#f8f9fa}
+.thTask{background:#f4f5f7;color:#172b4d;min-width:180px}
+.thStatus{background:#f4f5f7;color:#172b4d}
+.thR{background:rgba(255,235,230,.6);color:#bf2600}
+.thA{background:rgba(255,243,224,.6);color:#ff8b00}
+.thC{background:rgba(232,240,254,.6);color:#0052cc}
+.thI{background:rgba(244,245,247,.9);color:#42526e}
+.raciCell{display:inline-flex;align-items:center;gap:6px}
+.raciPerson{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer;transition:.15s}
+.raciPerson:hover{filter:brightness(.92);transform:scale(1.03)}
+.rpR{background:#ffebe6;color:#bf2600;border:1px solid rgba(191,38,0,.2)}
+.rpA{background:#fffae6;color:#ff8b00;border:1px solid rgba(255,139,0,.2)}
+.rpC{background:#e8f0fe;color:#0052cc;border:1px solid rgba(0,82,204,.2)}
+.rpI{background:#f4f5f7;color:#42526e;border:1px solid rgba(107,119,140,.2)}
+.raciTable td.tdTask{font-weight:600;color:#172b4d;max-width:200px}
+.stBadge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;display:inline-block}
+/* subtask mini bar in RACI */
+.stMini{display:flex;align-items:center;gap:5px}
+.stMiniBar{width:50px;height:4px;background:#ebecf0;border-radius:2px;overflow:hidden}
+.stMiniF{height:100%;background:#0052cc;border-radius:2px}
+.stMiniTx{font-size:9px;color:#6b778c}
+/* Pending approval row highlight */
+.raciTable tr.rowPa td{background:#fff0f0}
+
+/* ══ WORKLOAD BALANCE ═══════════════════════════ */
+.wlWrap{flex:1;overflow-y:auto;padding:16px;background:#f4f5f7;display:none}
+.wlGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:900px}
+.wlCard{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(9,30,66,.1);overflow:hidden}
+.wlCardHead{padding:12px 16px;border-bottom:1px solid #dfe1e6;display:flex;align-items:center;gap:10px}
+.wlAvatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.wlName{font-size:13px;font-weight:700;color:#172b4d}
+.wlRole{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.wlBody{padding:12px 16px}
+.wlStat{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;font-family:-apple-system,sans-serif}
+.wlStatLbl{color:#6b778c;font-size:11px}
+.wlStatVal{font-weight:700;color:#172b4d}
+.wlBar{height:6px;background:#ebecf0;border-radius:3px;overflow:hidden;margin-bottom:6px}
+.wlBarF{height:100%;border-radius:3px;transition:width .5s}
+.wlTaskList{margin-top:8px}
+.wlTaskItem{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f4f5f7;font-size:11px}
+.wlTaskTx{color:#172b4d;flex:1;margin-right:8px}
+.overloadWarn{background:#ffebe6;border:1px solid #ff5630;border-radius:4px;padding:6px 10px;font-size:11px;color:#bf2600;margin-top:8px;display:none}
+.overloadWarn.show{display:block}
+/* Global workload chart area */
+.wlChartBox{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(9,30,66,.1);padding:16px;grid-column:1/-1}
+.wlChartTl{font-size:13px;font-weight:700;color:#172b4d;margin-bottom:12px}
+
+/* ══ AUDIT TRAIL ════════════════════════════════ */
+.auWrap{flex:1;overflow-y:auto;padding:16px;background:#f4f5f7;display:none}
+.auBox{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(9,30,66,.1);overflow:hidden}
+.auHead{padding:14px 18px;border-bottom:1px solid #dfe1e6;display:flex;align-items:center;justify-content:space-between}
+.auTl{font-size:14px;font-weight:700;color:#172b4d}
+.auFilter{font-size:11px;padding:5px 10px;border:1px solid #dfe1e6;border-radius:4px;font-family:inherit;color:#42526e;cursor:pointer;background:#fff}
+.auEmpty{padding:32px;text-align:center;color:#97a0af;font-size:13px;font-family:-apple-system,sans-serif}
+.auEntry{display:flex;align-items:flex-start;gap:12px;padding:10px 18px;border-bottom:1px solid #f0f0f0;transition:.15s}
+.auEntry:hover{background:#f8f9fa}
+.auDot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.auDotDone{background:#36b37e}.auDotMove{background:#0052cc}.auDotRework{background:#ff5630}.auDotPa{background:#ff8b00}.auDotCreate{background:#6554c0}
+.auLine{flex:1}
+.auWho{font-size:12px;font-weight:700;color:#172b4d;font-family:-apple-system,sans-serif}
+.auWhat{font-size:12px;color:#42526e;font-family:-apple-system,sans-serif;line-height:1.5}
+.auTask{color:#0052cc;font-weight:600}
+.auWhen{font-size:10px;color:#97a0af;font-family:-apple-system,sans-serif;margin-top:2px}
+.auRole{font-size:9px;padding:1px 6px;border-radius:3px;font-weight:700;margin-left:4px}
+.auBadge{display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:700;margin-left:6px}
+.auBDone{background:#e3fcef;color:#006644}.auBMove{background:#e8f0fe;color:#0052cc}.auBRework{background:#ffebe6;color:#bf2600}.auBPa{background:#fffae6;color:#ff8b00}
+/* ═══════════════ GANTT CHART CUSTOMIZATIONS ════════════════ */
+.gantt .bar-done .bar { fill: #36b37e !important; }
+.gantt .bar-urgent .bar { fill: #ff5630 !important; }
+.gantt .bar-normal .bar { fill: #0052cc !important; }
+.gantt .bar-progress { fill: rgba(255,255,255, 0.4) !important; }
+</style>
+</head>
+<body>
+
+<!-- ══════ WORK VIEW ══════════════════════════════════════════ -->
+
+<div id="wv" style="display: none;">
+  <div class="wTop">
+    <div class="wLogo">◈ Flow</div>
+    <button class="wNav">Progetti</button><button class="wNav">Board</button><button class="wNav">Calendario</button>
+    <div id="userSwitcher" onclick="toggleUserModal()">
+      <div class="uAvatar" id="uAv" style="background:#1e88e5">MA</div>
+      <span class="uName" id="uNm">Marco</span>
+      <span class="uRole roleA" id="uRl">A</span>
+      <span style="font-size:10px;color:#6b778c">▾</span>
+    </div>
+    <button id="aBtn" onclick="startTrans()">⚔ ADVENTURES ⚔</button>
+  </div>
+  <!-- User Modal -->
+  <div id="userModal">
+    <div class="umHead">Cambia Utente Attivo</div>
+    <div id="umList"></div>
+  </div>
+  <div id="sprintStrip">
+    <span class="spLbl">🗡 SPRINT</span>
+    <div class="spBarWrap"><div class="spTrack"><div id="spFill"></div></div></div>
+    <span class="spPct" id="spPct">0%</span>
+    <div class="spDiv"></div>
+    <span class="ltLbl">🏆 <span id="ltLbl">VENERDÌ LIBERO</span></span>
+    <div class="ltBarWrap"><div class="ltTrack"><div id="ltFill"></div></div></div>
+    <span class="ltPct" id="ltPct">0/6</span>
+  </div>
+  <div class="wTabs">
+    <button class="wTab active" id="tbK" onclick="swTab('k')">Kanban</button>
+    <button class="wTab" id="tbL" onclick="swTab('l')">Lista</button>
+    <button class="wTab" id="tbG" onclick="swTab('g')">📅 Gantt</button>
+    <button class="wTab" id="tbB" onclick="swTab('b')">📊 Burndown</button>
+    <button class="wTab" id="tbR" onclick="swTab('r')">🎯 RACI</button>
+    <button class="wTab" id="tbW" onclick="swTab('w')">⚖ Workload</button>
+    <button class="wTab" id="tbA" onclick="swTab('a')">📋 Audit Trail</button>
+    <button class="wTab" onclick="createNewTask()" style="color:#0052cc; font-weight:800; margin-left:auto;">+ NUOVO TASK</button>
+  </div>
+  <!-- KANBAN: 4 columns + Pending Approval -->
+  <div class="kbWrap" id="kbW">
+    <div class="kCol"><div class="kColH hTd">◻ TO DO<span class="kColN" id="wN0">0</span></div><div class="kColB" id="wB0" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,0)"></div></div>
+    <div class="kCol"><div class="kColH hDo">▶ DOING<span class="kColN nDo" id="wN1">0</span></div><div class="kColB" id="wB1" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,1)"></div></div>
+    <div class="kCol"><div class="kColH hRv">⏳ IN REVIEW<span class="kColN nRv" id="wN2">0</span></div><div class="kColB" id="wB2" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,2)"></div></div>
+    <div class="kCol"><div class="kColH hPa">🔐 PENDING APPROVAL<span class="kColN nPa" id="wN4">0</span></div><div class="kColB" id="wB4" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,4)"></div></div>
+    <div class="kCol"><div class="kColH hDn">✓ DONE<span class="kColN nDn" id="wN3">0</span></div><div class="kColB" id="wB3" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,3)"></div></div>
+  </div>
+  <!-- LISTA -->
+  <div class="lstWrap" id="lstW">
+    <table class="lstT"><thead><tr><th>TIPO</th><th>TASK</th><th>RESPONSABILE</th><th>STATO</th><th>PRI</th><th>TEMPO</th><th>RACI</th></tr></thead><tbody id="lstBody"></tbody></table>
+  </div>
+  <!-- GANTT CHART -->
+  <div class="bdWrap" id="ganttW" style="display:none; overflow-x: auto; padding: 20px;">
+    <div class="bdBox">
+      <div class="bdTl">📅 Pianificazione Progetto (Gantt)</div>
+      <div class="bdSub">Timeline dei task basata sulle date di scadenza.</div>
+      <div id="gantt-target"></div>
+    </div>
+  </div>
+
+  <!-- BURNDOWN -->
+  <div class="bdWrap" id="bdW">
+    <div class="bdBox">
+      <div class="bdTl">📊 Burndown Chart — Sprint Corrente</div>
+      <div class="bdSub">Ideale vs Reale · 7 giorni · <span id="bdStat"></span></div>
+      <div class="bdChartWrap"><canvas id="burndownChart"></canvas></div>
+    </div>
+  </div>
+  <!-- RACI DASHBOARD -->
+  <div class="raciWrap" id="raciW">
+    <div class="raciDash">
+      <div class="raciDashHead">
+        <div class="raciDashTl">🎯 RACI Matrix — Centro di Comando</div>
+        <div class="raciLegend">
+          <div class="raciLegItem"><div class="raciLegDot" style="background:#bf2600"></div>Responsible (chi esegue)</div>
+          <div class="raciLegItem"><div class="raciLegDot" style="background:#ff8b00"></div>Accountable (chi approva)</div>
+          <div class="raciLegItem"><div class="raciLegDot" style="background:#0052cc"></div>Consulted (supporto)</div>
+          <div class="raciLegItem"><div class="raciLegDot" style="background:#97a0af"></div>Informed (aggiornato)</div>
+        </div>
+      </div>
+      <div style="overflow-x:auto"><table class="raciTable" id="raciTableBody"></table></div>
+    </div>
+  </div>
+  <!-- WORKLOAD BALANCE -->
+  <div class="wlWrap" id="wlW">
+    <div class="wlGrid" id="wlGrid"></div>
+  </div>
+  <!-- AUDIT TRAIL -->
+  <div class="auWrap" id="auW">
+    <div class="auBox">
+      <div class="auHead">
+        <div class="auTl">📋 Audit Trail — Log Operazioni</div>
+        <select class="auFilter" id="auFilter" onchange="buildAudit()">
+          <option value="all">Tutte le operazioni</option>
+          <option value="done">Solo completamenti</option>
+          <option value="rework">Solo rework</option>
+          <option value="pa">Solo approvazioni</option>
+        </select>
+      </div>
+      <div id="auList"></div>
+    </div>
+  </div>
+</div>
+<!-- Permission Denied Toast -->
+<div class="permDenied" id="permToast"></div>
+
+<!-- ══════ WORK FLASH ═════════════════════════════════════════ -->
+<div id="wFlash"><div id="wFlashIn"><span id="wFlashIc">⚔</span><span id="wFlashTx"></span></div></div>
+
+<!-- ══════ DETAIL PANEL ═══════════════════════════════════════ -->
+<div id="detailPanel">
+  <div id="dpHead">
+    <button id="dpClose" onclick="closeDetail()">✕</button>
+    <div id="dpTitle">Task</div>
+  </div>
+  <div id="dpBody"></div>
+</div>
+
+<!-- ══════ GAME VIEW ══════════════════════════════════════════ -->
+<div id="gv">
+  <div id="ql">
+    <div id="qlH"><div class="qlTitle">📖 QUEST LOG</div></div>
+    <div id="qlStory"></div>
+    <div id="qlCols">
+      <div class="qlCol" id="qlC0"><div class="qlColH htd">◻ TO DO</div></div>
+      <div class="qlCol" id="qlC1"><div class="qlColH hdo">▶ IN CORSO</div></div>
+      <div class="qlCol" id="qlC2"><div class="qlColH hdn">✓ DONE</div></div>
+    </div>
+  </div>
+  <div id="rp">
+    <div id="gNav">
+      <!-- Pulsanti per richiamare i moduli nascosti -->
+      <button class="gNB" onclick="openModuleInModal('kbW', '📋 KANBAN')">📋 KANBAN</button>
+      <button class="gNB" onclick="openModuleInModal('ganttW', '📅 GANTT')">📅 GANTT</button>
+      <button class="gNB" onclick="openModuleInModal('raciW', '🎯 RACI')">🎯 RACI</button>
+      
+      <div id="gNavTl">⚔ ADVENTURES</div>
+
+      <!-- Utente attivo trasportato nella Game View -->
+      <div id="userSwitcher" onclick="toggleUserModal()" style="background:rgba(255,255,255,0.05); border:1.5px solid #141430; padding:2px 8px; margin-right:5px; height:24px; display:flex; align-items:center;">
+        <div class="uAvatar" id="uAv" style="width:16px; height:16px; font-size:7px; line-height:16px;">MA</div>
+      </div>
+      
+      <button class="gNB" onclick="createNewTask()" style="border-color:#44dd88; color:#44dd88;">+ TASK</button>
+      <button class="gNB" onclick="forceAuth()" style="border-color:#f5c518; color:#f5c518;">🔑 LOGIN</button>
+      <button class="gNB" onclick="oMod('tMod')">🎨 TEMA</button>
+      <button class="gNB" onclick="resetG()">↺</button>
+    </div>
+    <div id="scene">
+      <canvas id="bgCanvas"></canvas>
+      <div id="fogLayer"></div>
+      <div id="eyeParts"></div>
+      <div id="shieldDome"></div>
+      <div id="partyPanel"></div>
+      <div id="bossArea">
+        <div id="bossHud"><div id="bossName">KROMAZOTH</div><div class="bHpRow" id="bHpRow"></div></div>
+        <div id="bossWrap"><canvas id="bossCanvas" width="256" height="256"></canvas></div>
+      </div>
+      <div id="stabWrap">
+        <div class="stabLbl"><span>💊 STAB</span><span id="stabTx">0/5</span></div>
+        <div class="stabRow" id="stabRow"></div>
+        <div style="font-size:7px;color:#223322;margin-top:3px">Sara → ×2 danno</div>
+      </div>
+      <div id="critOv"><div id="critTx">💥 CRITICAL!!</div></div>
+    </div>
+    <div id="hud">
+      <div id="heroArea"><canvas id="heroCanvas" width="56" height="56"></canvas>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div class="hNm">EROE</div>
+          <div id="hHpW"><div id="hHpF"></div></div>
+          <div class="hHnt">⚔ GUERRIERO</div>
+        </div>
+      </div>
+      <div id="skillArea">
+        <button class="skB" id="shBtn" onclick="actShield()">🛡 SCUDO<br>TANK<br><span id="shCd" style="font-size:6px;color:rgba(85,153,255,.4)"></span></button>
+        <button class="skB" onclick="oMod('tMod')">🎨<br>TEMA</button>
+      </div>
+      <div id="mulD" class="m1">×<span id="mulV">1</span></div>
+      <div id="lootW">
+        <div id="lootNm">🏆 LOOT</div>
+        <div id="lootTk"><div id="lootFl" style="width:0%"></div></div>
+        <div id="lootCt">0/6</div>
+      </div>
+    </div>
+  </div>
+  <div id="victScreen">
+    <canvas id="coinCanvas"></canvas>
+    <div id="victC">
+      <div class="vTl">⚔ VITTORIA! ⚔</div>
+      <div class="vSub" id="vSub"></div>
+      <div class="lootArt"><div class="lootType">✦ OGGETTO LEGGENDARIO ✦</div><div class="lootName" id="vLootNm"></div><div class="lootDesc" id="vLootDesc"></div><div class="lootRar">◆ LEGGENDARIO ◆</div></div>
+      <button class="vBtn" onclick="openHR()">📧 NOTIFICA HR</button>
+      <button class="vBtn" onclick="resetG()" style="font-size:7px;padding:8px 16px;margin-top:-4px">↺ NUOVA CAMPAGNA</button>
+    </div>
+  </div>
+  <div id="hrModal">
+    <div class="hrEmail">
+      <div class="hrTop"><div class="hrLogo">⚔ ADVENTURES</div><div class="hrSent">✓ INVIATA</div></div>
+      <div class="hrMeta"><div class="hrMR"><span class="hrML">Da:</span><span>adventures@system.company.it</span></div><div class="hrMR"><span class="hrML">A:</span><span>hr@company.it; ceo@company.it</span></div></div>
+      <div class="hrSubj" id="hrSubj">🏆 BOSS SCONFITTO</div>
+      <div class="hrBody">Gentile HR,<br><br>Il sistema <b>Adventures</b> certifica il completamento del progetto <b id="hrProj"></b>, sconfiggendo il boss <b id="hrBoss"></b>.<br><br>🎁 Premio: <b id="hrLoot"></b><br>✅ Team: DPS / HEALER / TANK<br><div class="hrSig">Adventures v7 · Cooperative gameplay</div></div>
+      <div class="hrActs"><button class="hrAS" onclick="cMod('hrModal')">Chiudi</button><button class="hrAP" onclick="cMod('hrModal');resetG()">✓ Confermato</button></div>
+    </div>
+  </div>
+  <div class="tMod" id="tMod">
+    <div class="tBox">
+      <div class="tBoxTl">🎨 CAMPAGNA</div>
+      <div class="tGrid">
+        <button class="tPk act" id="tF" onclick="setTheme('f')">🐉<br><br>FANTASY</button>
+        <button class="tPk" id="tC" onclick="setTheme('c')">🌐<br><br>CYBERPUNK</button>
+        <button class="tPk" id="tS" onclick="setTheme('s')">🚀<br><br>SCI-FI</button>
+      </div>
+      <button class="tCl" onclick="cMod('tMod')">[ CHIUDI ]</button>
+    </div>
+  </div>
+  <!-- Modale Universale per ospitare le viste -->
+  <div class="tMod" id="universalModal">
+    <div class="tBox" style="max-width: 95%; width: 1200px; height: 85vh; display:flex; flex-direction:column; padding:15px;">
+      <div class="tBoxTl" style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <span id="uniModalTitle" style="font-size:12px;">TITOLO</span>
+        <button class="tCl" onclick="closeUniversalModal()" style="padding:4px 8px;">[ X ]</button>
+      </div>
+      <div id="uniModalContent" style="flex:1; overflow-y:auto; background:#fff; border-radius:4px;">
+        <!-- Qui ci verrà iniettato via JS il kanban, il gantt o il raci -->
+      </div>
+    </div>
+  </div>
+  <div id="transOv"><div id="transTx">⚔ ADVENTURES ⚔</div><div id="transBar"><div id="transBarFl"></div></div></div>
+</div>
+
+<script>
+// Inizializza la comunicazione con l'iframe di Trello
+
+const t = window.TrelloPowerUp.iframe({
+  appKey: '14d4322eddb6379e1daad3860a82e8c8', // <--- Sostituisci con la tua vera API Key
+  appName: 'Adventures Boss Fight'
+});
+let trelloListsCache = [];
+let trelloListNames = []; // Questa salverà i nomi delle colonne ("BACKLOG", "SVILUPPO", ecc.)
+/* ════════════════════════════════════════════════
+   PIXEL ART HELPERS
+════════════════════════════════════════════════ */
+const S4=4;
+function p4(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x*S4,y*S4,w*S4,h*S4)}
+function p3(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x*3,y*3,w*3,h*3)}
+function p2(ctx,x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x*2,y*2,w*2,h*2)}
+
+/* ════════ BOSS DRAGON ══════════════════════════ */
+function paintDragon(ctx,frame){
+  const p=p4.bind(null,ctx);ctx.clearRect(0,0,256,256);const wY=frame===1?-1:0;
+  ctx.fillStyle='rgba(80,5,0,0.22)';ctx.beginPath();ctx.ellipse(128,140,88,68,0,0,Math.PI*2);ctx.fill();
+  // wings left
+  p(1,14+wY,5,3,'#0c0303');p(2,12+wY,6,4,'#120404');p(3,10+wY,8,5,'#170505');p(4,8+wY,9,6,'#1c0606');p(6,7+wY,11,7,'#200707');p(8,8+wY,12,8,'#240808');p(10,9+wY,12,7,'#280909');p(12,10+wY,10,6,'#2a0909');p(14,11+wY,8,6,'#2c0a0a');p(16,12+wY,7,5,'#2e0a0a');p(18,13+wY,4,4,'#2a0909');
+  for(let dy=0;dy<6;dy++)for(let dx=0;dx<9;dx++)if((dx+dy)%2===0)p(3+dx*1.5,9+dy+wY,1,1,'#1a0606');
+  p(6,7+wY,1,10,'#150404');p(9,6+wY,1,11,'#150404');p(12,8+wY,1,9,'#150404');p(15,9+wY,1,7,'#150404');
+  p(1,13+wY,4,1,'#ff6644');p(3,11+wY,5,1,'#cc4422');p(6,9+wY,5,1,'#aa3316');p(10,7+wY,4,1,'#882208');
+  ctx.fillStyle='rgba(255,80,20,0.06)';ctx.fillRect(3*S4,(8+wY)*S4,16*S4,8*S4);
+  // wings right (mirror)
+  p(50,14+wY,5,3,'#0c0303');p(46,12+wY,6,4,'#120404');p(43,10+wY,8,5,'#170505');p(43,8+wY,9,6,'#1c0606');p(43,7+wY,11,7,'#200707');p(42,8+wY,12,8,'#240808');p(42,9+wY,12,7,'#280909');p(42,10+wY,10,6,'#2a0909');p(42,11+wY,8,6,'#2c0a0a');p(43,12+wY,7,5,'#2e0a0a');p(46,13+wY,4,4,'#2a0909');
+  for(let dy=0;dy<6;dy++)for(let dx=0;dx<9;dx++)if((dx+dy)%2===0)p(44+dx*1.5,9+dy+wY,1,1,'#1a0606');
+  p(57,7+wY,1,10,'#150404');p(54,6+wY,1,11,'#150404');p(51,8+wY,1,9,'#150404');p(48,9+wY,1,7,'#150404');
+  p(59,13+wY,4,1,'#ff6644');p(54,11+wY,5,1,'#cc4422');p(49,9+wY,5,1,'#aa3316');p(46,7+wY,4,1,'#882208');
+  ctx.fillStyle='rgba(255,80,20,0.06)';ctx.fillRect(45*S4,(8+wY)*S4,16*S4,8*S4);
+  // body
+  p(18,26,28,20,'#0e0503');p(19,24,26,19,'#1a0806');p(20,22,24,19,'#220b07');p(21,21,22,18,'#2a0e08');p(24,21,16,12,'#341208');p(26,20,12,10,'#3e1509');
+  const scR=['#180604','#2a0e07','#180604'];
+  for(let r=0;r<7;r++)for(let c2=0;c2<9;c2++){const cl=scR[(r+c2)%3];p(21+c2*2.5,22+r*2.5,2,2,cl);if((r+c2)%2===0)p(22+c2*2.5,23+r*2.5,1,1,'#3e1509');}
+  for(let i=0;i<6;i++){p(27+i*1.5,26,2,12,'#3a1208');p(28+i*1.5,27,1,10,'#1a0705');}
+  p(19,21,26,1,'#ee5533');p(20,20,24,1,'#cc4422');p(21,19,22,1,'#aa3316');p(22,18,20,1,'#883310');p(18,22,1,18,'#882211');p(46,22,1,18,'#882211');
+  // neck
+  p(27,17,10,8,'#220c07');p(28,16,8,8,'#2a0e08');p(29,15,6,7,'#320f09');
+  for(let i=0;i<4;i++){p(28+i*2,16+i,2,1,'#160503');p(29+i*2,17+i,1,1,'#3e1508');}
+  p(27,16,10,1,'#cc3311');
+  // head
+  p(22,6,20,13,'#1a0705');p(23,5,18,13,'#230b07');p(24,4,16,12,'#2e0e08');p(26,3,12,6,'#381108');p(27,2,10,5,'#3e1308');
+  for(let i=0;i<5;i++)p(25+i*3,4,2,2,i%2===0?'#160503':'#2a0c07');
+  p(22,5,20,1,'#ff7744');p(23,4,18,1,'#dd5533');p(24,3,16,1,'#bb4422');p(26,2,12,1,'#992211');p(22,5,1,12,'#882211');p(41,5,1,12,'#882211');
+  // snout
+  p(25,17,14,5,'#250c07');p(26,16,12,5,'#2e0e08');p(27,21,10,4,'#150503');p(28,22,8,3,'#100402');
+  for(let i=0;i<4;i++){p(28+i*2.5,22,2,3,'#d4d4b8');p(29+i*2.5,23,1,2,'#a0a08a');}
+  p(28,18,2,2,'#0a0302');p(34,18,2,2,'#0a0302');
+  ctx.fillStyle='rgba(255,110,0,0.2)';ctx.fillRect(27*S4,19*S4,10*S4,6*S4);
+  // horns
+  p(24,0,3,7,'#0a0808');p(25,0,2,5,'#1a1414');p(36,0,3,7,'#0a0808');p(37,0,2,5,'#1a1414');p(22,6,2,4,'#0c0a0a');p(39,6,2,4,'#0c0a0a');
+  [28,30,32,34,36].forEach((x,i)=>{p(x,4+i,1,3+i,'#0a0808');p(x,3+i,1,1,'#1e1818');});
+  // eyes
+  p(25,8,5,4,'#0a0302');ctx.fillStyle='rgba(255,20,0,0.35)';ctx.fillRect(24*S4,7*S4,7*S4,6*S4);
+  p(26,8,3,3,'#ff2200');p(27,8,2,2,'#ff6600');p(27,9,2,1,'#ffaa00');p(28,9,1,1,'#ffffff');
+  p(33,8,5,4,'#0a0302');ctx.fillStyle='rgba(255,20,0,0.35)';ctx.fillRect(32*S4,7*S4,7*S4,6*S4);
+  p(34,8,3,3,'#ff2200');p(35,8,2,2,'#ff6600');p(35,9,2,1,'#ffaa00');p(36,9,1,1,'#ffffff');
+  // legs
+  p(22,40,5,12,'#200a06');p(21,48,7,5,'#1a0805');p(37,40,5,12,'#200a06');p(37,48,7,5,'#1a0805');p(21,40,1,12,'#441a0e');p(41,40,1,12,'#441a0e');
+  [20,22,24,26].forEach(x=>{p(x,52,2,4,'#0a0808');p(x,55,1,1,'#1a1414');});[36,38,40,42].forEach(x=>{p(x,52,2,4,'#0a0808');p(x,55,1,1,'#1a1414');});
+  [20,22,24,26,36,38,40,42].forEach(x=>p(x,52,1,1,'#cc2200'));
+  // tail
+  p(44,36,8,5,'#200a06');p(50,37,7,4,'#1a0805');p(55,38,6,4,'#160604');p(58,40,5,3,'#120503');p(61,41,3,3,'#0e0402');p(62,43,2,2,'#ff2200');
+  [45,49,53,57,61].forEach((x,i)=>{p(x,34+i,1,3,'#0a0808');p(x,33+i,1,1,'#1e1414');});
+  const grd=ctx.createLinearGradient(0,44*S4,0,64*S4);grd.addColorStop(0,'rgba(0,0,0,0)');grd.addColorStop(1,'rgba(0,0,0,0.45)');ctx.fillStyle=grd;ctx.fillRect(0,44*S4,256,20*S4);
+}
+
+/* ════════ BOSS CORP-X (CYBER) ══════════════════ */
+function paintCyber(ctx,frame){
+  const p=p4.bind(null,ctx);ctx.clearRect(0,0,256,256);
+  ctx.fillStyle='rgba(0,229,255,0.05)';ctx.fillRect(0,0,256,256);
+  [[27,0,2,6,'#060616'],[30,0,4,8,'#060616'],[35,0,2,6,'#060616']].forEach(a=>p(...a));
+  p(30,0,4,2,'#00e5ff');p(27,0,2,1,'#00aacc');p(35,0,2,1,'#00aacc');p(29,0,1,1,'#ff0066');p(34,0,1,1,'#ff0066');
+  ctx.fillStyle='rgba(0,229,255,0.15)';ctx.fillRect(27*S4,0,12*S4,4*S4);
+  p(22,5,20,10,'#06061a');p(24,6,16,8,'#0a0a1e');p(26,7,12,6,'#0d0d22');
+  p(22,5,20,1,'#00e5ff');p(22,5,1,10,'#00e5ff');p(41,5,1,10,'#00e5ff');p(22,14,20,1,'#003344');
+  p(28,7,8,4,'#000814');
+  const eyeX=frame===1?32:29;p(eyeX,8,3,1,'#ff0066');p(eyeX+1,8,1,1,'#ff66aa');
+  ctx.fillStyle='rgba(255,0,102,0.18)';ctx.fillRect(29*S4,7*S4,8*S4,4*S4);
+  p(23,9,2,2,'#00aacc');p(39,9,2,2,'#ff0066');
+  // left arm
+  p(14,14,6,4,'#080818');p(10,16,8,3,'#06061a');p(6,18,8,3,'#080818');p(2,20,8,3,'#06061a');p(2,23,6,3,'#080818');
+  p(14,14,6,1,'#00e5ff');p(10,16,8,1,'#00aacc');p(6,18,8,1,'#00e5ff');p(2,20,8,1,'#00aacc');
+  p(12,15,3,3,'#141428');p(13,16,1,1,'#00e5ff');p(8,17,3,3,'#141428');p(9,18,1,1,'#00e5ff');p(4,19,3,3,'#141428');p(5,20,1,1,'#00e5ff');
+  p(2,23,5,6,'#08081a');p(0,28,5,3,'#060616');p(0,27,2,2,'#080820');
+  ctx.fillStyle='rgba(0,229,255,0.07)';ctx.fillRect(0,14*S4,18*S4,20*S4);
+  // right arm
+  p(44,14,6,4,'#080818');p(46,16,8,3,'#06061a');p(50,18,8,3,'#080818');p(54,20,8,3,'#06061a');p(56,23,6,3,'#080818');
+  p(44,14,6,1,'#00e5ff');p(46,16,8,1,'#00aacc');p(50,18,8,1,'#00e5ff');p(54,20,8,1,'#00aacc');
+  p(49,15,3,3,'#141428');p(50,16,1,1,'#00e5ff');p(53,17,3,3,'#141428');p(54,18,1,1,'#00e5ff');p(57,19,3,3,'#141428');p(58,20,1,1,'#00e5ff');
+  p(57,23,5,6,'#08081a');p(59,28,5,3,'#060616');p(62,27,2,2,'#080820');
+  ctx.fillStyle='rgba(0,229,255,0.07)';ctx.fillRect(46*S4,14*S4,18*S4,20*S4);
+  // chassis
+  p(16,14,32,28,'#050514');p(17,15,30,26,'#07071a');p(18,16,28,24,'#090920');
+  p(18,16,8,10,'#060618');p(18,16,8,1,'#003344');p(18,17,1,8,'#003344');p(25,17,1,8,'#003344');p(18,24,8,1,'#003344');
+  p(19,18,3,1,'#00e5ff');p(19,20,2,1,'#00aacc');p(19,22,4,1,'#00e5ff');p(23,18,2,1,'#ff0066');p(23,20,2,1,'#ff0066');
+  p(38,16,8,10,'#060618');p(38,16,8,1,'#003344');p(38,17,1,8,'#003344');p(45,17,1,8,'#003344');p(38,24,8,1,'#003344');
+  p(39,18,3,1,'#00e5ff');p(39,20,2,1,'#00aacc');p(39,22,4,1,'#00e5ff');p(43,18,2,1,'#ff0066');
+  // screen
+  p(26,16,12,14,'#000a14');p(26,16,12,1,'#00e5ff');p(26,29,12,1,'#00e5ff');p(26,16,1,14,'#00e5ff');p(37,16,1,14,'#00e5ff');
+  const bH=frame===1?[5,3,6,2,4,5,3]:[4,5,2,6,3,4,5];
+  bH.forEach((h,i)=>{p(27+i*1.5,29-h,1,h,i%2===0?'#00e5ff':'#ff0066');});
+  ctx.fillStyle='rgba(0,229,255,0.05)';for(let sy=17;sy<29;sy+=2)ctx.fillRect(27*S4,sy*S4,10*S4,4);
+  p(26,16,2,2,'#00e5ff');p(36,16,2,2,'#00e5ff');p(26,28,2,2,'#00e5ff');p(36,28,2,2,'#00e5ff');
+  // status / lower
+  p(18,31,28,4,'#050510');[[19,32,3,'#00e5ff'],[23,32,3,'#00e5ff'],[27,32,4,'#ff0066'],[32,32,3,'#00e5ff'],[36,32,3,'#00aacc'],[40,32,4,'#ff0066']].forEach(([x,y,w,c])=>{p(x,y,w,2,c);});
+  p(20,36,24,8,'#060616');p(21,37,22,6,'#07071c');p(24,44,5,12,'#06061a');p(35,44,5,12,'#06061a');
+  p(24,44,5,1,'#00e5ff');p(35,44,5,1,'#00e5ff');p(22,56,8,4,'#050514');p(34,56,8,4,'#050514');
+  p(22,56,8,1,'#00e5ff');p(34,56,8,1,'#00e5ff');
+  ctx.fillStyle='rgba(0,229,255,0.28)';ctx.fillRect(22*S4,59*S4,8*S4,4);ctx.fillRect(34*S4,59*S4,8*S4,4);
+}
+
+/* ════════ BOSS ALIEN (SCI-FI) ══════════════════ */
+function paintAlien(ctx,frame){
+  const p=p4.bind(null,ctx);ctx.clearRect(0,0,256,256);
+  ctx.fillStyle='rgba(60,0,130,0.12)';ctx.beginPath();ctx.ellipse(128,96,105,95,0,0,Math.PI*2);ctx.fill();
+  const rows=[[28,8,8],[26,5,12],[24,4,16],[22,3,20],[20,3,24],[19,2,26],[17,2,30],[16,2,32],[16,1,32],[16,1,32],[16,1,32],[16,1,32],[16,1,32],[17,1,30],[18,1,28],[20,1,24],[22,1,20],[24,2,16],[26,3,12],[28,4,8],[30,5,4]];
+  rows.forEach(([x,w],y)=>{p(x,y+3,w,1,'#12002e');});
+  rows.forEach(([x,w],y)=>{if(y>2&&y<17){p(x+2,y+3,w-4,1,'#18003a');}});
+  rows.forEach(([x,w],y)=>{if(y>4&&y<15){p(x+4,y+3,w-8,1,'#200050');}});
+  rows.forEach(([x,w],y)=>{if(y>6&&y<13){p(x+6,y+3,w-12,1,'#280062');}});
+  // nucleus
+  const nx=32*S4,ny=14*S4,nclr=frame===1?'rgba(180,60,255,0.55)':'rgba(120,30,220,0.4)';
+  ctx.fillStyle=nclr;ctx.beginPath();ctx.ellipse(nx,ny,28,26,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(200,100,255,0.2)';ctx.beginPath();ctx.ellipse(nx,ny,44,40,0,0,Math.PI*2);ctx.fill();
+  p(27,11,10,6,'#0a0030');p(28,12,8,4,'#1a0058');p(30,14,4,4,frame===1?'#8800ff':'#6600cc');p(31,15,2,2,frame===1?'#bb88ff':'#9966cc');p(31,15,1,1,'#ffffff');
+  [[20,7,5,3,'#4400aa','#8844ff'],[39,7,5,3,'#4400aa','#8844ff'],[18,12,6,4,'#22008a','#6633dd'],[39,12,6,4,'#22008a','#6633dd'],[30,4,4,3,'#0000aa','#4488ff']].forEach(([ex,ey,ew,eh,ec,eh2])=>{
+    p(ex,ey,ew,eh,'#000008');p(ex+1,ey,ew-2,eh-1,ec);p(ex+1,ey,ew-2,1,eh2);p(ex+ew-2,ey,1,1,'#ffffff');ctx.fillStyle=ec+'33';ctx.fillRect(ex*S4,ey*S4,ew*S4,eh*S4);
+  });
+  // tentacles
+  [[[15,25,3,3],[13,28,3,3],[11,31,2,3],[9,34,2,4],[8,38,2,4],'#3300ff'],
+   [[19,26,3,3],[17,29,3,3],[15,32,2,3],[14,35,2,4],'#5500cc'],
+   [[24,27,3,3],[22,30,2,4],[21,34,2,4],[20,38,2,4],'#7700ff'],
+   [[36,27,3,3],[38,30,2,4],[39,34,2,4],[40,38,2,4],'#7700ff'],
+   [[40,26,3,3],[42,29,3,3],[44,32,2,3],[45,35,2,4],'#5500cc'],
+   [[48,25,3,3],[50,28,3,3],[52,31,2,3],[54,34,2,4],[55,38,2,4],'#3300ff']
+  ].forEach(tent=>{
+    const tip=tent[tent.length-1];const segs=tent.slice(0,-1);
+    const tColors=['#0e0028','#110030','#140038','#17003e','#1a0044'];
+    segs.forEach((seg,si)=>{p(seg[0],seg[1],seg[2],seg[3],tColors[Math.min(si,tColors.length-1)]);if(si===segs.length-1){p(seg[0],seg[1],seg[2],1,tip);ctx.fillStyle=tip+'44';ctx.fillRect(seg[0]*S4,seg[1]*S4,seg[2]*S4,(seg[3]+1)*S4);}});
+  });
+  ctx.fillStyle='rgba(80,0,160,0.08)';ctx.beginPath();ctx.ellipse(128,80,100,85,0,0,Math.PI*2);ctx.fill();
+}
+
+/* ════════ HERO & PARTY ═════════════════════════ */
+function paintHero(ctx){
+  const p=p3.bind(null,ctx);ctx.clearRect(0,0,56,56);
+  p(5,1,8,2,'#2a1a0a');p(5,2,8,4,'#5a3a20');p(6,1,6,1,'#8a5a2a');p(5,5,8,5,'#f4c2a1');p(6,6,1,1,'#2244aa');p(10,6,1,1,'#2244aa');p(7,8,4,1,'#c4736a');p(7,9,4,2,'#f4c2a1');
+  p(4,11,10,6,'#1a3388');p(4,11,1,6,'#ccaa00');p(13,11,1,6,'#ccaa00');p(6,12,6,1,'#ccaa00');p(4,14,2,2,'#2255aa');p(12,14,2,2,'#2255aa');p(5,11,8,1,'#4466cc');
+  p(2,11,3,3,'#cc9900');p(13,11,3,3,'#cc9900');p(2,11,3,1,'#ffcc22');p(13,11,3,1,'#ffcc22');
+  p(2,14,3,4,'#1a3388');p(13,14,3,4,'#1a3388');p(2,17,3,1,'#f4c2a1');p(13,17,3,1,'#f4c2a1');p(2,18,2,2,'#f4c2a1');p(14,18,2,2,'#f4c2a1');
+  p(5,17,4,4,'#0e2266');p(9,17,4,4,'#0e2266');p(4,20,4,3,'#111111');p(9,20,4,3,'#111111');p(4,22,5,1,'#222222');p(9,22,5,1,'#222222');
+  p(15,7,1,10,'#bbbbdd');p(14,11,3,1,'#ccaa00');p(15,7,1,1,'#ddddff');
+}
+function paintAv(ctx,cls){
+  const p=p2.bind(null,ctx);ctx.clearRect(0,0,64,64);
+  const pal={DPS:{arm:'#8b1a1a',trim:'#dd3333',acc:'#ff5544',hair:'#cc2200',glow:'rgba(255,60,50,0.15)'},HEALER:{arm:'#0d3d1a',trim:'#22882a',acc:'#44dd88',hair:'#116622',glow:'rgba(60,255,130,0.12)'},TANK:{arm:'#0d1e5a',trim:'#1a44cc',acc:'#4488ff',hair:'#0a1a88',glow:'rgba(60,100,255,0.15)'}};
+  const c=pal[cls]||pal.DPS;
+  ctx.fillStyle=c.glow;ctx.beginPath();ctx.ellipse(32,32,28,28,0,0,Math.PI*2);ctx.fill();
+  p(10,4,12,2,c.hair);p(10,5,2,4,c.hair);p(20,5,2,4,c.hair);p(10,6,12,10,'#f4c2a1');p(12,8,2,2,'#222244');p(18,8,2,2,'#222244');p(12,8,2,1,'#5588ff');p(18,8,2,1,'#5588ff');p(14,12,4,1,'#c4736a');
+  p(14,15,4,3,'#f4c2a1');p(8,18,16,10,c.arm);p(8,18,2,10,c.trim);p(22,18,2,10,c.trim);p(12,19,8,2,c.trim);
+  p(4,18,5,7,c.arm);p(23,18,5,7,c.arm);p(4,18,1,7,c.trim);p(27,18,1,7,c.trim);p(4,24,4,3,'#f4c2a1');p(24,24,4,3,'#f4c2a1');
+  p(10,28,6,6,'#0a0818');p(16,28,6,6,'#0a0818');p(10,28,1,6,c.trim);p(21,28,1,6,c.trim);
+  if(cls==='DPS'){p(28,10,2,18,'#bbbbdd');p(27,17,4,2,'#ccaa00');}
+  else if(cls==='HEALER'){p(28,10,2,2,c.acc);p(29,8,2,6,c.acc);p(27,12,6,2,c.acc);}
+  else{p(1,16,4,8,c.acc);p(0,17,5,6,'rgba(100,150,255,0.25)');}
+}
+
+/* ════════ BACKGROUNDS ══════════════════════════ */
+function drawBg(canvas,th){
+  canvas.width=canvas.offsetWidth||600;canvas.height=canvas.offsetHeight||320;
+  const ctx=canvas.getContext('2d');const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
+  if(th==='f'){
+    const sky=ctx.createLinearGradient(0,0,0,H*.65);sky.addColorStop(0,'#050210');sky.addColorStop(.4,'#0a0520');sky.addColorStop(1,'#130830');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(180,160,255,0.06)';ctx.beginPath();ctx.ellipse(W*.78,H*.18,55,55,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(210,200,255,0.18)';ctx.beginPath();ctx.ellipse(W*.78,H*.18,18,18,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.7)';for(let i=0;i<80;i++)ctx.fillRect(((i*47+i*i*3)%W)|0,((i*31+5)%(H*.55))|0,i%5===0?2:1,i%5===0?2:1);
+    ctx.fillStyle='#080418';ctx.beginPath();ctx.moveTo(0,H*.58);for(let x=0;x<W;x+=40)ctx.lineTo(x,H*.58-Math.sin(x*.015+1)*25);ctx.lineTo(W,H*.58);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fill();
+    const aW=W*.25,aX=W*.38,aY=H*.35;ctx.fillStyle='#0d0922';ctx.fillRect(aX,aY,aW*.12,H);ctx.fillRect(aX+aW*.88,aY,aW*.12,H);ctx.beginPath();ctx.arc(aX+aW*.5,aY+2,aW*.45,Math.PI,0,false);ctx.fill();ctx.fillStyle='#07051a';ctx.fillRect(aX+aW*.12,aY,aW*.76,H);ctx.beginPath();ctx.arc(aX+aW*.5,aY+2,aW*.38,Math.PI,0,false);ctx.fill();
+    [[W*.06,H*.3,18],[W*.18,H*.36,16],[W*.68,H*.32,18],[W*.82,H*.28,22]].forEach(([x,y,w])=>{ctx.fillStyle='#0e0a20';ctx.fillRect(x,y,w,H-y);ctx.fillStyle='#1a1438';for(let s=y;s<H-y;s+=16)ctx.fillRect(x-2,s,w+4,3);ctx.fillStyle='#0e0a20';});
+    const dT=(tx,ty,h,sp)=>{ctx.fillStyle='#060416';ctx.fillRect(tx-5,ty,10,h);ctx.fillStyle='#08051a';ctx.beginPath();ctx.ellipse(tx,ty-sp*.4,sp*.8,sp*.6,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(tx-sp*.5,ty-sp*.2,sp*.6,sp*.4,-.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(tx,ty-sp*.8,sp*.5,sp*.45,0,0,Math.PI*2);ctx.fill();};
+    dT(W*.05,H*.62,H*.38,65);dT(W*.14,H*.58,H*.42,75);dT(W*.82,H*.6,H*.4,70);dT(W*.91,H*.55,H*.45,80);
+    [[W*.22,H*.62,18,45],[W*.26,H*.65,12,35],[W*.70,H*.63,16,40],[W*.74,H*.66,10,30]].forEach(([cx,cy,cw,ch])=>{ctx.fillStyle='rgba(120,40,220,0.45)';ctx.beginPath();ctx.moveTo(cx-cw/2,cy+ch);ctx.lineTo(cx,cy);ctx.lineTo(cx+cw/2,cy+ch);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(160,80,255,0.15)';ctx.beginPath();ctx.ellipse(cx,cy+ch*.5,cw*.8,ch*.6,0,0,Math.PI*2);ctx.fill();});
+    const grd=ctx.createLinearGradient(0,H*.7,0,H);grd.addColorStop(0,'#0a0820');grd.addColorStop(1,'#070518');ctx.fillStyle=grd;ctx.fillRect(0,H*.7,W,H*.3);ctx.fillStyle='#050415';ctx.fillRect(0,H*.68,W,H*.04);
+    const vgT=ctx.createLinearGradient(0,0,0,H*.15);vgT.addColorStop(0,'rgba(0,0,0,0.6)');vgT.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=vgT;ctx.fillRect(0,0,W,H*.15);
+  } else if(th==='c'){
+    ctx.fillStyle='#020008';ctx.fillRect(0,0,W,H);ctx.fillStyle='rgba(20,0,60,0.8)';ctx.fillRect(0,0,W,H*.6);
+    ctx.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<50;i++)ctx.fillRect(((i*61+i*i)%W)|0,((i*37)%(H*.55))|0,1,1);
+    [[0,H*.55,60],[70,H*.48,50],[130,H*.52,45],[190,H*.44,65],[270,H*.5,40],[320,H*.46,55],[390,H*.53,50],[450,H*.45,60],[520,H*.5,55],[580,H*.47,50]].forEach(([x,y,w])=>{ctx.fillStyle='#0a0025';ctx.fillRect(x,y,w,H-y);});
+    [[W*.15,H*.48,'#ff00aa'],[W*.32,H*.44,'#00e5ff'],[W*.55,H*.5,'#ff00aa'],[W*.74,H*.46,'#00e5ff']].forEach(([x,y,c])=>{ctx.fillStyle=c;ctx.fillRect(x,y,80,2);ctx.fillStyle=c+'44';ctx.fillRect(x-5,y-2,90,6);});
+    const neonW=['#00e5ff','#ff00aa','#ffdd00','#00ff88'];for(let i=0;i<40;i++){ctx.fillStyle=neonW[i%4]+'88';ctx.fillRect(((i*71+15)%W)|0,(H*.46+((i*17)%(H*.2)))|0,4,3);}
+    ctx.fillStyle='#030012';ctx.fillRect(0,H*.72,W,H*.28);ctx.fillStyle='rgba(0,229,255,0.08)';for(let x=0;x<W;x+=35)ctx.fillRect(x,H*.72,1,H*.28);for(let y=H*.72;y<H;y+=20)ctx.fillRect(0,y,W,1);
+    ctx.fillStyle='rgba(0,229,255,0.5)';ctx.fillRect(0,H*.72,W,2);ctx.fillStyle='rgba(255,0,180,0.3)';ctx.fillRect(0,H*.72+3,W,1);
+  } else {
+    ctx.fillStyle='#000005';ctx.fillRect(0,0,W,H);
+    for(let i=0;i<120;i++){ctx.fillStyle=`rgba(255,255,255,${0.3+Math.random()*.7})`;const s=i%8===0?2.5:i%4===0?1.5:1;ctx.fillRect(((i*47+i*i*3)%W)|0,((i*23+7)%(H*.8))|0,s,s);}
+    ctx.fillStyle='rgba(80,0,160,0.12)';ctx.beginPath();ctx.ellipse(W*.2,H*.25,100,60,.3,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#200050';ctx.beginPath();ctx.arc(W*.8,H*.18,35,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3a0088';ctx.beginPath();ctx.arc(W*.8,H*.18,28,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='rgba(255,200,255,0.15)';ctx.beginPath();ctx.ellipse(W*.8-5,H*.18-5,18,12,-.5,0,Math.PI*2);ctx.fill();
+    [[W*.06,H*.45,15],[W*.2,H*.38,22],[W*.7,H*.42,18],[W*.85,H*.35,24]].forEach(([x,y,w])=>{ctx.fillStyle='#0e0025';ctx.fillRect(x,y,w,H-y);ctx.fillStyle='rgba(180,0,255,0.5)';ctx.fillRect(x,y,w,2);ctx.fillStyle='#0e0025';});
+    const sg=ctx.createLinearGradient(0,H*.7,0,H);sg.addColorStop(0,'#0e0025');sg.addColorStop(1,'#070015');ctx.fillStyle=sg;ctx.fillRect(0,H*.7,W,H*.3);
+    ctx.fillStyle='rgba(150,0,255,0.3)';ctx.fillRect(0,H*.7,W,2);
+    for(let i=0;i<8;i++){const cx=W*(.08+i*.12),ch=15+i%3*10;ctx.fillStyle='rgba(160,0,255,0.5)';ctx.beginPath();ctx.moveTo(cx-4,H*.72+ch);ctx.lineTo(cx,H*.72);ctx.lineTo(cx+4,H*.72+ch);ctx.closePath();ctx.fill();}
+  }
+}
+
+/* ════════ FOG ══════════════════════════════════ */
+function buildFog(){
+  const fl=document.getElementById('fogLayer');fl.innerHTML='';
+  const fc='rgba(180,170,220,';
+  for(let i=0;i<8;i++){
+    const d=document.createElement('div');d.className='fogF';
+    const w=120+Math.random()*200,h=30+Math.random()*50,y=55+Math.random()*55;
+    const a=0.05+Math.random()*.1,dur=18+Math.random()*22,delay=-(Math.random()*dur);
+    d.style.cssText=`width:${w}px;height:${h}px;top:${y}%;background:radial-gradient(ellipse,${fc}${a}) 0%,transparent 70%);animation:${i%2===0?'fogL':'fogR'} ${dur}s ${delay}s linear infinite`;
+    fl.appendChild(d);
+  }
+}
+
+/* ════════ EYE PARTICLES ════════════════════════ */
+let eyeTimer=null;
+function startEye(){if(eyeTimer)clearInterval(eyeTimer);eyeTimer=setInterval(spawnSpark,450);}
+function stopEye(){if(eyeTimer){clearInterval(eyeTimer);eyeTimer=null;}}
+function spawnSpark(){
+  if(!document.getElementById('gv').classList.contains('on'))return;
+  const ep=document.getElementById('eyeParts');const bwR=document.getElementById('bossWrap').getBoundingClientRect();const scR=document.getElementById('scene').getBoundingClientRect();
+  const clr={f:'#ff4400',c:'#00e5ff',s:'#aa44ff'};const sc2=bwR.width/256;
+  const eyes=cur==='f'?[{x:27,y:9},{x:35,y:9}]:cur==='c'?[{x:30,y:8},{x:34,y:8}]:[{x:28,y:14},{x:36,y:14}];
+  eyes.forEach(e=>{
+    if(Math.random()<.55){
+      const sp=document.createElement('div');sp.className='eSpark';
+      const lx=(bwR.left-scR.left)+e.x*4*sc2+(Math.random()*8-4);const ly=(bwR.top-scR.top)+e.y*4*sc2+(Math.random()*6-3);
+      sp.style.cssText=`left:${lx}px;top:${ly}px;background:${clr[cur]};box-shadow:0 0 5px ${clr[cur]}`;
+      const vx=(Math.random()-.5)*50,vy=-(15+Math.random()*35),dur=.6+Math.random()*.5;
+      sp.animate([{opacity:1,transform:'translate(0,0) scale(1)'},{opacity:0,transform:`translate(${vx}px,${vy}px) scale(.1)`}],{duration:dur*1000,fill:'forwards'});
+      ep.appendChild(sp);setTimeout(()=>sp.remove(),dur*1000);
+    }
+  });
+}
+
+/* ════════ BOSS ANIM LOOP ═══════════════════════ */
+let animRAF=null,bFrame=0,bTimer=0;
+const PAINTERS={f:paintDragon,c:paintCyber,s:paintAlien};
+function startAnim(){
+  if(animRAF)cancelAnimationFrame(animRAF);
+  const bCtx=document.getElementById('bossCanvas').getContext('2d');
+  function loop(t){if(t-bTimer>1400){bFrame=(bFrame+1)%2;bTimer=t;PAINTERS[cur](bCtx,bFrame);}animRAF=requestAnimationFrame(loop);}
+  animRAF=requestAnimationFrame(loop);
+}
+function stopAnim(){if(animRAF){cancelAnimationFrame(animRAF);animRAF=null;}}
+
+/* ════════ COINS ════════════════════════════════ */
+function startCoins(){
+  const cc=document.getElementById('coinCanvas');cc.width=document.getElementById('victScreen').offsetWidth;cc.height=document.getElementById('victScreen').offsetHeight;
+  const ctx=cc.getContext('2d');const coins=[];
+  for(let i=0;i<80;i++)coins.push({x:cc.width/2+(Math.random()-.5)*cc.width*.5,y:cc.height*.45,vx:(Math.random()-.5)*14,vy:-(8+Math.random()*16),r:4+Math.random()*6,c:Math.random()<.6?'#f5c518':Math.random()<.5?'#ff5566':'#4cdd5a',rot:Math.random()*Math.PI*2,rv:(Math.random()-.5)*.3,alpha:1});
+  let cf=0;
+  function anim(){ctx.clearRect(0,0,cc.width,cc.height);coins.forEach(c=>{c.vy+=.35;c.x+=c.vx;c.y+=c.vy;c.rot+=c.rv;if(c.y>cc.height)c.alpha-=.04;if(c.alpha<=0)return;ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);ctx.globalAlpha=c.alpha;ctx.fillStyle=c.c;ctx.fillRect(-c.r,-c.r/2,c.r*2,c.r);ctx.restore();});cf++;if(cf<160)requestAnimationFrame(anim);}
+  requestAnimationFrame(anim);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════════════════════════════ */
+const PRI_MULT = {U:2.5, H:1.5, M:1.0, L:0.75};
+const PRI_INFO = {U:{icon:'🚨',lbl:'Urgent',cls:'priU',dmg:'×2.5'},H:{icon:'🔴',lbl:'High',cls:'priH',dmg:'×1.5'},M:{icon:'🟡',lbl:'Medium',cls:'priM',dmg:'×1.0'},L:{icon:'🟢',lbl:'Low',cls:'priL',dmg:'×0.75'}};
+const ISSUE_INFO = {task:{icon:'✅',lbl:'Task'},bug:{icon:'🐛',lbl:'Bug'},story:{icon:'📖',lbl:'Story'},epic:{icon:'⚡',lbl:'Epic'}};
+const COVERS = [null,'#ff5630','#ff991f','#f5c518','#36b37e','#00bcd4','#0052cc','#6554c0'];
+// 0=ToDo 1=Doing 2=InReview 3=Done 4=PendingApproval
+const ST_LBL = ['To Do','Doing','In Review','Done','⏳ Pending Approval'];
+const TODAY = new Date('2026-03-31');
+
+/* TEAM ROSTER — ogni membro ha ruoli abituali */
+const TEAM = [
+  {nm:'Marco',  initials:'MA', color:'#1e88e5', defaultRole:'A', desc:'Product Manager — Approva e chiude task'},
+  {nm:'Claudia',initials:'CL', color:'#e53935', defaultRole:'R', desc:'Lead Dev — Esegue task tecnici'},
+  {nm:'Sara',   initials:'SA', color:'#43a047', defaultRole:'R', desc:'QA Engineer — Esegue task qualità'},
+  {nm:'Giulia', initials:'GI', color:'#8e24aa', defaultRole:'C', desc:'UX Designer — Consulente design'}
+];
+
+/* CURRENT USER — simulato (in prod = auth) */
+let currentUser = 'Marco';
+
+/* AUDIT LOG */
+let auditLog = [];
+function logAudit(taskTitle, fromSt, toSt, who, raciRole){
+  const typeMap = {done:'auBDone',rework:'auBRework',pa:'auBPa',move:'auBMove'};
+  let type = toSt===3?'done':fromSt===3?'rework':toSt===4?'pa':'move';
+  auditLog.unshift({taskTitle,fromSt,toSt,who,raciRole,type,ts:Date.now()});
+}
+
+/* ═══════════════ THEME / TASK DATA ══════════════════════════════ */
+let THEMES = {
+  f:{name:'KROMAZOTH',proj:'Lancio App iOS',loot:'VENERDÌ LIBERO',
+     lootDesc:'Il team ha dimostrato potere ineguagliabile.<br>Venerdì prossimo è vostro — niente meeting, niente Slack.<br>Approvato dal CEO della Gilda.',
+     story:'Il drago Kromazoth ha posato le zampe corrotte sul progetto. DPS→danni diretti, HEALER→carica Stabilità ×2, TANK→Scudo cliente.',
+     paint:paintDragon,
+     q:[]}, // <--- SVUOTATO!
+  c:{name:'CORP-X MAINFRAME',proj:'Hackera il Sistema',loot:'CENA DI SQUADRA',
+     lootDesc:'Anno 2089. Il Mainframe è offline.<br>Cena di équipe al ristorante tier-S. Budget illimitato.',
+     story:'Anno 2089. CORP-X ha infettato i server. Ogni commit pushato strappa cavi al Mainframe. Abbattilo prima della finestra temporale.',
+     paint:paintCyber,
+     q:[]}, // <--- SVUOTATO!
+  s:{name:'HIVEMIND ZEXAR',proj:'Missione iOS Alpha',loot:'GIORNATA REMOTA',
+     lootDesc:'ZEXAR neutralizzato.<br>Lavora da dove vuoi. Qualsiasi pianeta. Wifi garantito.',
+     story:'ZEXAR estende tentacoli psionici sui server. I deliverable consegnati sparano antimateria contro il nucleo alieno. Sintetizza, trasmetti, distruggi.',
+     paint:paintAlien,
+     q:[]} // <--- SVUOTATO!
+};
+/* ══════════════════════════════════════════════════════════════
+   GAME STATE
+══════════════════════════════════════════════════════════════ */
+let cur='f',stab=0,mult=1,totDmg=0,shActive=false,shTmr=null,lastDpsT=0,dpsCombo=0;
+const MAXHP=20;
+const T=()=>THEMES[cur];
+const maxDmg=()=>T().q.reduce((s,q)=>s+(q.d||0),0);
+
+// --- SISTEMA DI SALVATAGGIO NATIVO TRELLO (ZERO DATABASE ESTERNI) ---
+
+// Questa funzione salva solo lo stato "estetico" del gioco nella Board di Trello
+async function saveGameState() {
+  const state = {
+    cur: cur,      // Tema attuale (Fantasy, Cyberpunk, ecc.)
+    stab: stab,    // Cariche dello scudo/healer
+    mult: mult     // Moltiplicatore danni
+  };
+
+  try {
+    // Salviamo i dati direttamente "dentro" la board di Trello!
+    await t.set('board', 'shared', 'adventuresGameState', state);
+  } catch(e) {
+    console.error("Errore salvataggio su Trello:", e);
+  }
+}
+
+// Questa funzione legge i dati estetici salvati nella Board
+async function loadGameState() {
+  try {
+    const state = await t.get('board', 'shared', 'adventuresGameState');
+
+    if (state) {
+      cur = state.cur || 'f';
+      stab = state.stab || 0;
+      mult = state.mult || 1;
+    } else {
+      // Se è la primissima volta che aprono il gioco su questa board, salva i default
+      cur = 'f'; stab = 0; mult = 1;
+      saveGameState();
+    }
+
+    // Applica le modifiche visive se il gioco è aperto
+    if (document.getElementById('gv').classList.contains('on')) {
+      document.getElementById('mulV').textContent = mult;
+      document.getElementById('mulD').className = mult > 1 ? 'm2' : 'm1';
+      buildStab();
+      // Riavviamo i disegni per assicurarci che il tema sia corretto
+      const bgC = document.getElementById('bgCanvas');
+      if(bgC) drawBg(bgC, cur);
+      const bCtx = document.getElementById('bossCanvas').getContext('2d');
+      PAINTERS[cur](bCtx, 0);
+    }
+  } catch(e) {
+    console.error("Errore caricamento da Trello:", e);
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   STATE MACHINE — v8
+   0=ToDo · 1=Doing · 2=InReview · 3=Done · 4=PendingApproval
+   
+   PERMISSION ENGINE:
+   - Only Accountable (A) can approve: PendingApproval(4) → Done(3)
+   - When Responsible (R) tries to push to Done from InReview → PendingApproval(4)
+   - Anyone can move To Do → Doing → InReview
+   - Rework from Done → Doing requires A or R
+
+   SUBTASK DAMAGE:
+   - damage = base * priMult * (subtasksDone/subtasksTotal)
+   - If no subtasks: full damage
+══════════════════════════════════════════════════════════════ */
+function showPermDenied(msg){
+  const t=document.getElementById('permToast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function checkPermission(q, toSt){
+  // Versione semplificata: chiunque può fare tutto
+  return true; 
+}
+
+function getUserRaciRole(q){
+  if(q.raci.R===currentUser)return'R';
+  if(q.raci.A===currentUser)return'A';
+  if(q.raci.C===currentUser)return'C';
+  return'I';
+}
+/* ═══════════════ TRELLO API CALLS ═══════════════════ */
+function forceAuth() {
+  t.getRestApi().authorize({
+    scope: 'read,write',
+    expiration: 'never',
+    // ⚠️ METTI QUI IL TUO LINK NETLIFY ESATTO (senza / alla fine)
+    return_url: 'https://gianmariadri-sudo.github.io/adventures-trello/tereso'
+  }).then(() => {
+    showWorkFlash("✅ Trello collegato! Ora puoi combattere.", "🔑");
+  }).catch(e => {
+    console.error("Errore di Auth:", e);
+    showWorkFlash("❌ Collegamento annullato.", "🛑");
+  });
+}
+async function moveCardOnTrello(trelloCardId, targetStateIndex) {
+  try {
+    const token = await t.getRestApi().getToken();
+    
+    // Se non c'è il token, diciamo all'utente di cliccare il bottone!
+    if (!token) {
+      showPermDenied("Devi prima cliccare su 🔑 LOGIN in alto!");
+      return false; 
+    }
+
+    const safeIndex = Math.min(targetStateIndex, trelloListsCache.length - 1);
+    const targetListId = trelloListsCache[safeIndex];
+
+    if (!targetListId) return false;
+
+    // ⚠️ CHIAVE FISSA: Così non la perde mai!
+    const appKey = '14d4322eddb6379e1daad3860a82e8c8'; 
+    
+    const response = await fetch(`https://api.trello.com/1/cards/${trelloCardId}?idList=${targetListId}&key=${appKey}&token=${token}`, {
+      method: 'PUT'
+    });
+
+    if (response.ok) {
+      return true; // Tutto perfetto!
+    } else {
+      const errorText = await response.text();
+      console.error("Errore Trello API:", errorText);
+      alert("Trello ha rifiutato lo spostamento: " + errorText); // Mostra l'errore se Trello si arrabbia
+      return false;
+    }
+  } catch (err) {
+    console.error("Errore di rete con le API di Trello:", err);
+    return false;
+  }
+}
+async function handleTransition(i, fromSt, toSt, fromWork){
+  const q=T().q[i];
+  if(fromSt===toSt)return;
+
+  // --- NOVITÀ: CHIAMATA A TRELLO ---
+  if (q.idTrello) {
+    if (fromWork) showWorkFlash('⏳ Sincronizzazione con Trello...', '🔄');
+    
+    // Proviamo a muovere la vera card di Trello
+    const success = await moveCardOnTrello(q.idTrello, toSt);
+    
+    if (!success) {
+      showPermDenied("Devi prima autorizzare il plugin nel Pop-up!");
+      return; // Blocchiamo i danni locali se fallisce su Trello
+    }
+  }
+  // ---------------------------------
+
+  // Permission check
+  const perm = checkPermission(q, toSt);
+  if(perm===false)return; // denied
+  if(perm==='pendingApproval'){
+    // Route to PendingApproval instead of Done
+    q.st=4;
+    logAudit(q.t, fromSt, 4, currentUser, getUserRaciRole(q));
+    if(fromWork)showWorkFlash('⏳ Inviato ad Approvazione → '+q.raci.A,'⏳');
+    const done=T().q.filter(q=>q.st===3).length;
+    updateBars(done);buildQL();rebuildWork();
+    return;
+  }
+
+  const raciRole = getUserRaciRole(q);
+  q.st=toSt;
+  // Timestamps
+  if(toSt===1 && !q.doing_at)q.doing_at=Date.now();
+  if(toSt===3){q.done_at=Date.now();}
+  if(fromSt===3){q.done_at=null;}
+
+  // Audit
+  logAudit(q.t, fromSt, toSt, currentUser, raciRole);
+
+  const sc=document.getElementById('scene');
+  if(toSt===3){
+    // SUBTASK-proportional damage
+    const stTotal=q.subtasks.length;const stDone=q.subtasks.filter(s=>s.done).length;
+    const stRatio=stTotal>0?(stDone/stTotal):1;
+    if(q.cls==='HEALER'){
+      const healAmt=Math.round((q.s||2)*stRatio);
+      stab=Math.min(5,stab+healAmt);
+      if(stab>=5){mult=2;stab=0;document.getElementById('mulD').className='m2';document.getElementById('mulV').textContent='2';}
+      buildStab();if(sc)showFloat('+CURA ♥','#44dd88',sc);
+      if(fromWork)showWorkFlash('💊 Stabilità +'+healAmt+(stRatio<1?' (subtask parziali)':''),'💊');
+    } else {
+      const priMult=PRI_MULT[q.pri]||1;
+      const now=Date.now();let fd=Math.round((q.d||2)*mult*priMult*stRatio);
+      if(fd<1&&(q.d||0)>0)fd=1; // minimum 1 if task has damage
+      if(q.cls==='DPS'){
+        if(now-lastDpsT<3000&&lastDpsT>0){dpsCombo++;if(dpsCombo>=2){fd=Math.round(fd*2);if(sc)showCrit();}}
+        else dpsCombo=1;lastDpsT=now;
+        if(mult>1){mult=1;document.getElementById('mulD').className='m1';document.getElementById('mulV').textContent='1';}
+      }
+      q.dmgDealt=fd;totDmg+=fd;
+      const dmgTx=`-${fd}HP!${stRatio<1?' ('+Math.round(stRatio*100)+'% sub)':''}`;
+      if(sc){showFloat(dmgTx,'#ff4444',sc);hitBoss(fd>=6);}
+      if(fromWork)showWorkFlash('⚔ -'+fd+'HP → '+T().name+(stRatio<1?' 【subtask parziali】':''),'⚔');
+    }
+  } else if(fromSt===3){
+    const regen=q.dmgDealt||0;
+    if(regen>0){totDmg=Math.max(0,totDmg-regen);q.dmgDealt=0;buildBossHP();if(sc)showFloat('⚠ +'+regen+'HP','#ff9900',sc);}
+    if(fromWork)showWorkFlash('⚠ Rework! Boss +'+regen+'HP','⚠');
+  } else if(fromSt===4 && toSt===3){
+    // Approved by A - full damage now
+    const stTotal=q.subtasks.length;const stDone=q.subtasks.filter(s=>s.done).length;
+    const stRatio=stTotal>0?(stDone/stTotal):1;
+    const priMult=PRI_MULT[q.pri]||1;
+    const fd=Math.round((q.d||2)*mult*priMult*stRatio);
+    if(fd>0){q.dmgDealt=fd;totDmg+=fd;if(sc){showFloat('✅ APPROVATO! -'+fd+'HP!','#f5c518',sc);hitBoss(fd>=5);}}
+    if(fromWork)showWorkFlash('✅ Approvato da '+currentUser+' — DONE!','✅');
+  } else {
+    if(fromWork){const hints=['','▶ Task avviata','⏳ In Review','','⏳ Pending…'];if(hints[toSt])showWorkFlash(hints[toSt],'📋');}
+  }
+
+  const done=T().q.filter(q=>q.st===3).length;
+  updateBars(done);buildQL();rebuildWork();
+  if(done===T().q.length&&T().q.length>0)setTimeout(showVictory,800);
+
+  saveGameState();
+}
+
+// Work view click: full cycle including PendingApproval
+function advanceWork(i){
+  const q=T().q[i];const f=q.st||0;
+  // Cycle: 0→1→2→[PA or Done]→1
+  // If currentUser is A and task is at PA: approve → Done
+  // If task is Done: rework → 1
+  let n;
+  if(f===3||f===4)n=1;
+  else n=f+1; // 0→1, 1→2, 2→3(intercepted to PA if not A)
+  handleTransition(i,f,n,true);
+}
+// Game view click: 3-step (skip review)
+function advanceGame(i){
+  const q=T().q[i];const f=q.st||0;
+  let n;
+  if(f===0)n=1;else if(f===1||f===2)n=3;else n=1;
+  if(q.boring){glitchReskin(i,()=>handleTransition(i,f,n,false));return;}
+  handleTransition(i,f,n,false);
+}
+function glitchReskin(i,cb){
+  const q=T().q[i];q.boring=false;
+  const items=document.querySelectorAll('.qlItem');let target=null;
+  items.forEach(el=>{if(parseInt(el.dataset.idx)===i)target=el;});
+  if(target){
+    target.classList.add('glitch');
+    const txEl=target.querySelector('.qlTxt');
+    if(txEl)setTimeout(()=>{txEl.textContent=q.ep;target.classList.remove('glitch');setTimeout(cb,120);},550);
+    else setTimeout(cb,200);
+  } else cb();
+}
+
+/* ═══════════════ DRAG & DROP ═══════════════════ */
+let dragIdx=null;
+function cardDragStart(e,i){
+  dragIdx=i;e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.target.classList.add('dragging'),0);
+}
+function cardDragEnd(e){e.target.classList.remove('dragging');}
+function colDragOver(e){e.preventDefault();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
+function colDragLeave(e){e.currentTarget.classList.remove('drag-over');}
+function colDrop(e,toSt){
+  e.preventDefault();e.currentTarget.classList.remove('drag-over');
+  if(dragIdx===null)return;
+  const q=T().q[dragIdx];const fromSt=q.st||0;
+  handleTransition(dragIdx,fromSt,toSt,true);
+  dragIdx=null;
+}
+
+/* ═══════════════ GAME COMBAT ═══════════════════ */
+function hitBoss(heavy=false){
+  const bw=document.getElementById('bossWrap');bw.classList.add('hit');setTimeout(()=>bw.classList.remove('hit'),420);
+  const gv=document.getElementById('gv');gv.style.animation='none';void gv.offsetWidth;gv.style.animation=(heavy?'screenShake .5s':'screenShake .3s')+' ease';setTimeout(()=>gv.style.animation='',600);
+  buildBossHP();
+}
+function showCrit(){const ov=document.getElementById('critOv');ov.classList.add('on');setTimeout(()=>ov.classList.remove('on'),1200);}
+function showFloat(txt,col,parent){
+  const d=document.createElement('div');d.className='dmgF';d.style.cssText=`color:${col};text-shadow:0 0 12px ${col};left:${42+Math.random()*16}%;top:${28+Math.random()*20}%`;d.textContent=txt;parent.appendChild(d);setTimeout(()=>d.remove(),950);
+}
+function actShield(){
+  if(shActive)return;shActive=true;
+  const btn=document.getElementById('shBtn'),dome=document.getElementById('shieldDome');
+  btn.classList.add('shOn');btn.disabled=true;dome.classList.add('active');
+  let s=10;document.getElementById('shCd').textContent=s+'s';
+  shTmr=setInterval(()=>{s--;document.getElementById('shCd').textContent=s>0?s+'s':'';if(s<=0){clearInterval(shTmr);shActive=false;btn.classList.remove('shOn');btn.disabled=false;dome.classList.remove('active');document.getElementById('shCd').textContent='';}},1000);
+}
+function showWorkFlash(txt,icon='⚔'){
+  document.getElementById('wFlashIc').textContent=icon;document.getElementById('wFlashTx').textContent=txt;
+  const f=document.getElementById('wFlash');f.classList.remove('show');void f.offsetWidth;f.classList.add('show');setTimeout(()=>f.classList.remove('show'),2800);
+}
+
+/* ═══════════════ BARS ═══════════════════════════ */
+function updateBars(done){
+  const total=T().q.length;const spPct=Math.round((done/total)*100);
+  document.getElementById('spFill').style.width=spPct+'%';document.getElementById('spPct').textContent=spPct+'%';
+  const lPct=Math.min(100,Math.round((totDmg/Math.max(maxDmg(),1))*100));
+  document.getElementById('ltFill').style.width=lPct+'%';document.getElementById('ltPct').textContent=done+'/'+total;
+  document.getElementById('lootFl').style.width=lPct+'%';document.getElementById('lootCt').textContent=done+'/'+total+' quest';
+}
+function buildBossHP(){
+  const md=maxDmg(),fill=Math.round((totDmg/Math.max(md,1))*MAXHP),rem=MAXHP-fill;
+  const t=document.getElementById('bHpRow');t.innerHTML='';
+  for(let i=0;i<MAXHP;i++){const s=document.createElement('div');s.className='bSeg';if(i<rem){s.classList.add('on');const r=rem/MAXHP;if(r<=.3)s.classList.add('l');else if(r<=.6)s.classList.add('m');}t.appendChild(s);}
+}
+function buildStab(){
+  const t=document.getElementById('stabRow');t.innerHTML='';
+  for(let i=0;i<5;i++){const s=document.createElement('div');s.className='stabSeg'+(i<stab?' on':'');t.appendChild(s);}
+  document.getElementById('stabTx').textContent=stab+'/5';
+}
+
+/* ═══════════════ PARTY ═════════════════════════ */
+function buildParty(){
+  const pl=document.getElementById('partyPanel');pl.innerHTML='';
+  PARTY.forEach(m=>{
+    const d=document.createElement('div');d.className='pmCard';
+    const cv=document.createElement('canvas');cv.width=64;cv.height=64;cv.style.cssText='width:32px;height:32px;image-rendering:pixelated;flex-shrink:0';
+    const inf=document.createElement('div');inf.className='pmInfo';
+    const cs=m.cl==='DPS'?'background:#280010;color:#ff5566;border:1px solid #ff556622':m.cl==='HEALER'?'background:#001e0d;color:#44dd88;border:1px solid #44dd8822':'background:#000d22;color:#5599ff;border:1px solid #5599ff22';
+    const ic=m.cl==='DPS'?'⚔':m.cl==='HEALER'?'💊':'🛡';
+    inf.innerHTML=`<div class="pmNm">${m.nm}</div><div class="pmCl" style="${cs}">${ic} ${m.cl}</div><div class="pmHpB"><div class="pmHpF" style="width:${m.hp}%;background:${m.mc}"></div></div>`;
+    d.appendChild(cv);d.appendChild(inf);pl.appendChild(d);paintAv(cv.getContext('2d'),m.cl);
+  });
+}
+
+/* ═══════════════ QUEST LOG ═════════════════════ */
+function buildQL(){
+  document.getElementById('qlStory').textContent=T().story;
+  const qlCols = document.getElementById('qlCols');
+  qlCols.innerHTML = ''; // Svuotiamo le vecchie colonne finte
+  
+  // Usiamo le liste di Trello (se ci sono), altrimenti fallback
+  const columns = trelloListNames.length > 0 ? trelloListNames : ['TO DO', 'IN CORSO', 'DONE'];
+
+  columns.forEach((colName, colIdx) => {
+    // Calcoliamo i colori in base a se è la prima, l'ultima o una in mezzo
+    const isLast = colIdx === columns.length - 1;
+    const hClass = colIdx === 0 ? 'htd' : isLast ? 'hdn' : 'hdo';
+
+    // Disegniamo la colonna
+    const colDiv = document.createElement('div');
+    colDiv.className = 'qlCol';
+    colDiv.id = 'qlC' + colIdx;
+    colDiv.innerHTML = `<div class="qlColH ${hClass}">${colName}</div>`;
+
+    // Inseriamo i task che appartengono a questa colonna
+    T().q.forEach((q, i) => {
+      const st = q.st || 0;
+      if (st !== colIdx) return;
+      
+      const isDoneTask = st === columns.length - 1; // È nell'ultima colonna?
+      
+      const d=document.createElement('div');
+      d.className='qlItem'+(isDoneTask?' qlDn':'');d.dataset.idx=i;
+      
+      const ckCls=isDoneTask?'ckDn':st>=1?'ckD':'ckT';const ckTx=isDoneTask?'✓':st>=1?'▶':'';
+      const bdgCls=q.cls==='DPS'?'bDPS':q.cls==='HEALER'?'bHEAL':'bTANK';
+      const ic=q.cls==='DPS'?'⚔':q.cls==='HEALER'?'💊':'🛡';
+      const priM=PRI_MULT[q.pri]||1;
+      const dmgH=q.cls==='DPS'?`⚔ ${Math.round((q.d||2)*mult*priM)}dmg`:q.cls==='HEALER'?`+${q.s||2} stabilità`:'🛡 scudo';
+      const nm=q.boring?q.t:q.ep;
+      
+      d.innerHTML=`<div class="qlTop"><span class="qlCk ${ckCls}">${ckTx}</span><span class="qlBdg ${bdgCls}">${ic} ${q.cls}</span><span class="qlBdg" style="background:rgba(255,165,0,.15);color:#f5a623;border:1px solid rgba(255,165,0,.2)">${PRI_INFO[q.pri]?.icon||'🟡'}</span><button onclick="event.stopPropagation();openDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:10px;margin-left:auto;color:#8888cc" title="Modifica task">✏️</button></div><div class="qlTxt">${nm}</div><div class="qlHint">${dmgH}</div>`;
+      
+      // Se non è ancora finito, gli diamo la funzione per farlo avanzare
+      if(!isDoneTask) d.onclick=()=>advanceGame(i);
+      colDiv.appendChild(d);
+    });
+    
+    qlCols.appendChild(colDiv);
+  });
+}
+
+/* ═══════════════ WORK VIEW BUILD ═══════════════ */
+function getDueInfo(due){
+  if(!due)return null;
+  const d=new Date(due);const diff=Math.round((d-TODAY)/86400000);
+  if(diff<0)return{cls:'dueOver',lbl:`⚠ Scaduto ${d.toLocaleDateString('it')}`};
+  if(diff===0)return{cls:'dueOver',lbl:'⚠ Scade oggi!'};
+  if(diff<=2)return{cls:'dueSoon',lbl:`⏰ Scade in ${diff}g`};
+  return{cls:'dueOk',lbl:`📅 ${d.toLocaleDateString('it')}`};
+}
+function getTimeInfo(q){
+  if(q.st===1&&q.doing_at){const mins=Math.round((Date.now()-q.doing_at)/60000);const h=Math.floor(mins/60),m=mins%60;return`▶ ${h>0?h+'h ':''}${m}m in lavorazione`;}
+  if(q.st===3&&q.doing_at&&q.done_at){const mins=Math.round((q.done_at-q.doing_at)/60000);const h=Math.floor(mins/60),m=mins%60;return`✓ ${h>0?h+'h ':''}${m}m totale`;}
+  return null;
+}
+function buildCard(q,i){
+  const pi=PRI_INFO[q.pri]||PRI_INFO.M;const ii=ISSUE_INFO[q.type]||ISSUE_INFO.task;
+  const d=document.createElement('div');
+  const isPa=q.st===4;
+  d.className='kCard'+(isPa?' pendingApproval':'');d.draggable=true;
+  d.ondragstart=(e)=>cardDragStart(e,i);d.ondragend=(e)=>cardDragEnd(e);
+  const coverHtml=q.cover?`<div class="kCover visible" style="background:${q.cover}"></div>`:'<div class="kCover"></div>';
+  const due=getDueInfo(q.due);const dueHtml=due?`<div class="dueBdg ${due.cls}">${due.lbl}</div>`:'';
+  const ti=getTimeInfo(q);const timeHtml=ti?`<div class="timeBdg">${ti}</div>`:'';
+  const stDone=q.subtasks.filter(s=>s.done).length;const stTotal=q.subtasks.length;
+  const stPct=stTotal>0?Math.round(stDone/stTotal*100):0;
+  const stHtml=stTotal>0?`<div class="stProg"><div class="stProgRow"><span class="stProgTx">${stDone}/${stTotal} subtask (${stPct}%)</span></div><div class="stProgBar"><div class="stProgFill" style="width:${stPct}%"></div></div></div>`:'';
+  // Determine state hint
+  const isA = q.raci.A === currentUser;
+  const isR = q.raci.R === currentUser;
+  let hintTxt;
+  if(q.st===3)hintTxt='↩ Rework';
+  else if(q.st===4){hintTxt=isA?'✅ Clicca per Approvare':'🔐 Attesa approvazione di '+q.raci.A;}
+  else if(q.st===2)hintTxt=isA?'→ Approva (Done)':'→ Pending Approval';
+  else if(q.st===1)hintTxt='→ In Review';
+  else hintTxt='▶ Avvia';
+  const rc=q.raci;
+  const paFlag=isPa?`<div class="paFlag">🔐 PENDING APPROVAL · In attesa di ${q.raci.A}</div>`:'';
+  // Subtask damage preview
+  const stRatio=stTotal>0?(stDone/stTotal):1;
+  const priMult=PRI_MULT[q.pri]||1;
+  const dmgPreview=q.d>0?`<span style="font-size:8px;color:#0052cc;margin-left:4px">[danno: ${Math.round(q.d*priMult*stRatio)}HP]</span>`:'';
+  d.innerHTML=`${coverHtml}<div class="kCardBody">
+    ${paFlag}
+    <div class="kTx"><span class="issueIco">${ii.icon}</span><span class="kTxText">${q.t}</span><button class="kExpand" onclick="event.stopPropagation();openDetail(${i})">⋯</button></div>
+    <div class="kMeta"><span class="tag ${q.tag}">${q.tagL}</span><span class="priBdg ${pi.cls}">${pi.icon} ${pi.dmg}</span>${dmgPreview}<div class="kAv ${['avC','avS','avM','avG'][i%4]}">${rc.R.substring(0,2).toUpperCase()}</div></div>
+    <div class="ttxt">⏱ ${q.spent}/${q.est}</div>
+    ${timeHtml}${dueHtml}${stHtml}
+    <div class="raci"><span class="rR">R: ${rc.R}</span><span class="rA">A: ${rc.A}</span><span class="rC">C: ${typeof rc.C==='string'?rc.C.substring(0,5):rc.C}</span><span class="rI">I: ${typeof rc.I==='string'?rc.I.substring(0,5):rc.I}</span></div>
+    <div class="stateHint">${hintTxt}</div>
+  </div>`;
+  d.addEventListener('click',()=>openDetail(i));
+  if(q.st===3){d.style.opacity='.55';}
+  const priColors={U:'#de350b',H:'#ff5630',M:'#ff991f',L:'#36b37e'};
+  d.style.borderLeftColor=priColors[q.pri]||priColors.M;
+  return d;
+}
+
+function rebuildWork(){
+  const kbW = document.getElementById('kbW');
+  if (kbW) {
+    kbW.innerHTML = ''; // Svuotiamo le colonne vecchie
+    
+    const columns = trelloListNames.length > 0 ? trelloListNames : ['TO DO', 'DOING', 'DONE'];
+
+    columns.forEach((colName, n) => {
+      const isLast = n === columns.length - 1;
+      const hClass = n === 0 ? 'hTd' : isLast ? 'hDn' : 'hDo';
+      const nClass = n === 0 ? '' : isLast ? 'nDn' : 'nDo';
+
+      const kCol = document.createElement('div');
+      kCol.className = 'kCol';
+      kCol.innerHTML = `<div class="kColH ${hClass}">${colName}<span class="kColN ${nClass}" id="wN${n}">0</span></div><div class="kColB" id="wB${n}" ondragover="colDragOver(event)" ondragleave="colDragLeave(event)" ondrop="colDrop(event,${n})"></div>`;
+      kbW.appendChild(kCol);
+    });
+  }
+
+  // Distribuiamo le card e contiamole
+  const counts = {};
+  T().q.forEach((q,i)=>{
+    const st=q.st||0;
+    const col=document.getElementById('wB'+st);
+    if(col){ col.appendChild(buildCard(q,i)); counts[st] = (counts[st]||0) + 1; }
+  });
+
+  // Scriviamo i contatori sopra le colonne
+  Object.keys(counts).forEach(n=>{
+    const el=document.getElementById('wN'+n); if(el) el.textContent=counts[n];
+  });
+
+  // Aggiorna anche la vista a "Lista"
+  const tbody=document.getElementById('lstBody');if(!tbody)return;tbody.innerHTML='';
+  T().q.forEach((q,i)=>{
+    const pi=PRI_INFO[q.pri]||PRI_INFO.M;const ii=ISSUE_INFO[q.type]||ISSUE_INFO.task;
+    const rc=q.raci;
+    const isLast = (q.st||0) === (trelloListNames.length - 1);
+    const stClass= q.st === 0 ? 'sTd' : isLast ? 'sDn' : 'sDo';
+    const stText = trelloListNames[q.st||0] || 'Task';
+    
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${ii.icon} <span class="tag ${q.tag}">${q.tagL}</span></td><td>${q.t}</td><td>${rc.R}</td><td><span class="sB ${stClass}">${stText}</span></td><td>${pi.icon}</td><td style="font-size:10px;color:#8b8b9e">${q.spent}/${q.est}</td><td style="font-size:10px"><span class="rR" style="font-size:8px">R:${rc.R.substring(0,2)}</span> <span class="rA" style="font-size:8px">A:${rc.A.substring(0,2)}</span></td>`;
+    tr.addEventListener('click',()=>advanceWork(i));
+    tbody.appendChild(tr);
+  });
+  document.getElementById('ltLbl').textContent=T().loot;
+}
+
+/* ═══════════════ DETAIL PANEL ══════════════════ */
+let detailIdx=null;
+function openDetail(i){
+  detailIdx=i;const q=T().q[i];const pi=PRI_INFO[q.pri]||PRI_INFO.M;const ii=ISSUE_INFO[q.type]||ISSUE_INFO.task;
+  document.getElementById('dpTitle').textContent='Dettaglio Task';
+  
+  const stDone=q.subtasks.filter(s=>s.done).length;const stTotal=q.subtasks.length;
+  const stPct=stTotal>0?Math.round(stDone/stTotal*100):0;
+  const ti=getTimeInfo(q);
+  
+  document.getElementById('dpBody').innerHTML=`
+    <div class="dpSection">
+      <input type="text" value="${q.t}" onchange="updateTaskField('t', this.value)" style="font-size:14px;font-weight:700;color:#172b4d;border:1px solid transparent;border-bottom:2px solid #0052cc;width:100%;padding:4px 0;outline:none;font-family:inherit;margin-bottom:10px;" placeholder="Titolo del task...">
+    </div>
+    
+    <div class="dpSection">
+      <div class="dpSectionTl">Statistiche RPG in Battaglia</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div><label style="font-size:9px;color:#6b778c;">Azione/Epic</label><input type="text" class="dpAddInput" style="margin-top:2px;" value="${q.ep}" onchange="updateTaskField('ep', this.value)"></div>
+        <div><label style="font-size:9px;color:#6b778c;">Classe Base</label>
+          <select class="dpAddInput" style="margin-top:2px;" onchange="updateTaskField('cls', this.value)">
+            <option value="DPS" ${q.cls==='DPS'?'selected':''}>⚔ DPS (Danno)</option>
+            <option value="HEALER" ${q.cls==='HEALER'?'selected':''}>💊 HEALER (Cura)</option>
+            <option value="TANK" ${q.cls==='TANK'?'selected':''}>🛡 TANK (Scudo)</option>
+          </select>
+        </div>
+        <div><label style="font-size:9px;color:#6b778c;">Danno (HP)</label><input type="number" class="dpAddInput" style="margin-top:2px;" value="${q.d||0}" onchange="updateTaskField('d', parseInt(this.value)||0)"></div>
+        <div><label style="font-size:9px;color:#6b778c;">Cura (Stabilità)</label><input type="number" class="dpAddInput" style="margin-top:2px;" value="${q.s||0}" onchange="updateTaskField('s', parseInt(this.value)||0)"></div>
+      </div>
+    </div>
+
+    <div class="dpSection">
+      <div class="dpSectionTl">Assegnazioni RACI</div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:4px;align-items:center;font-size:11px;">
+        <span class="rR" style="text-align:center;">R</span> <input class="dpAddInput" style="margin-top:0;" value="${q.raci.R}" onchange="updateRaci('R', this.value)" placeholder="Chi esegue il lavoro?">
+        <span class="rA" style="text-align:center;">A</span> <input class="dpAddInput" style="margin-top:0;" value="${q.raci.A}" onchange="updateRaci('A', this.value)" placeholder="Chi deve approvare?">
+        <span class="rC" style="text-align:center;">C</span> <input class="dpAddInput" style="margin-top:0;" value="${q.raci.C}" onchange="updateRaci('C', this.value)">
+        <span class="rI" style="text-align:center;">I</span> <input class="dpAddInput" style="margin-top:0;" value="${q.raci.I}" onchange="updateRaci('I', this.value)">
+      </div>
+    </div>
+
+    <div class="dpSection">
+      <div class="dpSectionTl">Cover Colorata</div>
+      <div class="coverSwatches">${COVERS.map((c,ci)=>`<div class="coverSw ${c===null?'coverSwNone':''} ${q.cover===c?'active':''}" style="${c?'background:'+c:''}" onclick="setCover(${ci})">${c===null?'✕':''}</div>`).join('')}</div>
+    </div>
+    
+    <div class="dpSection">
+      <div class="dpSectionTl">Tipo</div>
+      <div class="issueGrid">${Object.entries(ISSUE_INFO).map(([k,v])=>`<button class="issuePk ${q.type===k?'active':''}" onclick="setType('${k}')">${v.icon} ${v.lbl}</button>`).join('')}</div>
+    </div>
+    
+    <div class="dpSection">
+      <div class="dpSectionTl">Priorità (Moltiplica il danno al Boss)</div>
+      <div class="priGrid">${Object.entries(PRI_INFO).map(([k,v])=>`<button class="priPk ${q.pri===k?'active':''}" onclick="setPri('${k}')">${v.icon} ${v.lbl}<span style="font-size:9px;color:#0052cc">${v.dmg}</span></button>`).join('')}</div>
+    </div>
+
+    <div class="dpSection">
+      <div class="dpSectionTl">Subtask (${stDone}/${stTotal}) — ${stPct}%</div>
+      <div style="height:4px;background:#ebecf0;border-radius:2px;overflow:hidden;margin-bottom:8px"><div style="height:100%;width:${stPct}%;background:#0052cc;border-radius:2px;transition:width .3s"></div></div>
+      <div id="dpSubtasks">${q.subtasks.map((s,si)=>`<div class="stItem"><div class="stCk ${s.done?'done':''}" onclick="toggleSt(${si})">${s.done?'✓':''}</div><span class="stCkTx ${s.done?'done':''}">${s.t}</span><button onclick="deleteSt(${si})" style="background:none;border:none;color:#ff5630;cursor:pointer;font-size:12px;margin-left:auto;">✕</button></div>`).join('')}</div>
+      <input class="dpAddInput" id="dpStInput" placeholder="+ Aggiungi subtask..." onkeydown="if(event.key==='Enter')addSt()">
+      <button class="dpAddBtn" onclick="addSt()">+ Aggiungi</button>
+    </div>
+
+    <div class="dpSection">
+      <div class="dpSectionTl">Time Tracking</div>
+      <div class="ttRow"><span class="ttLbl">Stimato</span><input class="dpAddInput" style="width:80px;margin:0;padding:2px 4px;text-align:right;" value="${q.est}" onchange="updateTaskField('est', this.value)"></div>
+      <div class="ttRow"><span class="ttLbl">Speso</span><input class="dpAddInput" style="width:80px;margin:0;padding:2px 4px;text-align:right;" value="${q.spent}" onchange="updateTaskField('spent', this.value)"></div>
+      <div class="ttRow"><span class="ttLbl">Stato Attuale</span><span>${ST_LBL[q.st||0]}</span></div>
+    </div>
+
+    <div class="dpSection" style="margin-top:24px;border-top:1px solid #dfe1e6;padding-top:16px;">
+      <button onclick="deleteTask()" style="background:#ffebe6;color:#de350b;border:1px solid #ffbdad;padding:8px 16px;border-radius:4px;cursor:pointer;font-family:inherit;font-weight:bold;width:100%;transition:0.2s;">🗑 Elimina questo Task</button>
+    </div>`;
+  document.getElementById('detailPanel').classList.add('open');
+}
+function closeDetail(){document.getElementById('detailPanel').classList.remove('open');detailIdx=null;}
+function setCover(ci){if(detailIdx===null)return;T().q[detailIdx].cover=COVERS[ci];openDetail(detailIdx);rebuildWork(); saveGameState(); }
+function setType(t){if(detailIdx===null)return;T().q[detailIdx].type=t;openDetail(detailIdx);rebuildWork(); saveGameState(); }
+function setPri(p){if(detailIdx===null)return;T().q[detailIdx].pri=p;openDetail(detailIdx);rebuildWork(); saveGameState(); }
+function toggleSt(si){if(detailIdx===null)return;const q=T().q[detailIdx];q.subtasks[si].done=!q.subtasks[si].done;openDetail(detailIdx);rebuildWork(); saveGameState(); }
+function addSt(){if(detailIdx===null)return;const inp=document.getElementById('dpStInput');if(!inp.value.trim())return;T().q[detailIdx].subtasks.push({t:inp.value.trim(),done:false});inp.value='';openDetail(detailIdx);rebuildWork(); saveGameState();}
+function addComment(){if(detailIdx===null)return;const inp=document.getElementById('dpCmInput');if(!inp.value.trim())return;T().q[detailIdx].comments.push({author:'You',text:inp.value.trim(),ts:Date.now()});inp.value='';openDetail(detailIdx); saveGameState();}
+// --- SISTEMA DI CREAZIONE ED EDITING TASK ---
+
+// --- SISTEMA DI CREAZIONE ED EDITING TASK ---
+function createNewTask() {
+  alert("⚔️ Trello è ora il tuo Centro di Comando!\n\nCrea, sposta o elimina le Card direttamente nella tua bacheca di Trello. Chiudi questa finestra, fai le tue modifiche e riapri il gioco: i danni verranno calcolati automaticamente!");
+}
+
+function updateTaskField(field, val) {
+  if (detailIdx === null) return;
+  T().q[detailIdx][field] = val;
+  rebuildWork();
+  if (document.getElementById('gv').classList.contains('on')) buildQL(); // Aggiorna il gioco se aperto
+  saveGameState();
+}
+
+function updateRaci(role, val) {
+  if (detailIdx === null) return;
+  T().q[detailIdx].raci[role] = val;
+  rebuildWork();
+  saveGameState();
+}
+
+function deleteTask() {
+  if (detailIdx === null) return;
+  if (confirm("Sei sicuro di voler eliminare definitivamente questo task?")) {
+    T().q.splice(detailIdx, 1); // Rimuove il task
+    closeDetail();
+    rebuildWork();
+    if (document.getElementById('gv').classList.contains('on')) buildQL();
+    saveGameState();
+  }
+}
+
+function deleteSt(si) { // Per eliminare un subtask specifico
+  if (detailIdx === null) return;
+  T().q[detailIdx].subtasks.splice(si, 1);
+  openDetail(detailIdx);
+  rebuildWork();
+  saveGameState();
+}
+
+/* ═══════════════ RACI DASHBOARD ════════════════ */
+function buildRaciDash(){
+  const qs=T().q;
+  const stClsMap=['sTd','sDo','sRv','sDn','sPa'];
+  let html=`<thead><tr>
+    <th class="thTask">TASK</th>
+    <th class="thStatus">STATO</th>
+    <th class="thTask" style="font-size:9px;color:#6b778c">SUBTASK</th>
+    <th class="thR">🔴 R — Responsible</th>
+    <th class="thA">🟠 A — Accountable</th>
+    <th class="thC">🔵 C — Consulted</th>
+    <th class="thI">⚪ I — Informed</th>
+  </tr></thead><tbody>`;
+  qs.forEach((q,i)=>{
+    const stDone=q.subtasks.filter(s=>s.done).length;const stTotal=q.subtasks.length;
+    const stPct=stTotal>0?Math.round(stDone/stTotal*100):100;
+    const isPa=q.st===4;const rowCls=isPa?'rowPa':'';
+    const stCls=stClsMap[q.st||0]||'sTd';
+    const stTx=ST_LBL[q.st||0]||'To Do';
+    html+=`<tr class="${rowCls}" onclick="swTab('k')" style="cursor:pointer">
+      <td class="tdTask"><span style="font-size:10px">${ISSUE_INFO[q.type]?.icon||'✅'}</span> ${q.t}${isPa?'<span class="paFlag" style="margin-left:6px;font-size:8px">🔐</span>':''}</td>
+      <td><span class="stBadge ${stCls}">${stTx}</span></td>
+      <td><div class="stMini"><div class="stMiniBar"><div class="stMiniF" style="width:${stPct}%"></div></div><span class="stMiniTx">${stDone}/${stTotal||0}</span></div></td>
+      <td><span class="raciPerson rpR" onclick="event.stopPropagation();setUserByName('${q.raci.R}')">${q.raci.R}</span></td>
+      <td><span class="raciPerson rpA" onclick="event.stopPropagation();setUserByName('${q.raci.A}')">${q.raci.A}</span></td>
+      <td><span class="raciPerson rpC">${q.raci.C}</span></td>
+      <td><span class="raciPerson rpI">${q.raci.I}</span></td>
+    </tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('raciTableBody').innerHTML=html;
+}
+
+/* ═══════════════ WORKLOAD BALANCE ══════════════ */
+let wlChart=null;
+function buildWorkload(){
+  const qs=T().q;
+  // Count R assignments per person
+  const rCount={};const aCount={};const allTasks={};
+  TEAM.forEach(m=>{rCount[m.nm]=0;aCount[m.nm]=0;allTasks[m.nm]=[];});
+  qs.forEach(q=>{
+    if(rCount[q.raci.R]!==undefined){rCount[q.raci.R]++;allTasks[q.raci.R].push(q);}
+    if(aCount[q.raci.A]!==undefined)aCount[q.raci.A]++;
+  });
+  const maxR=Math.max(...Object.values(rCount),1);
+  const avColors={'Claudia':'#e53935','Sara':'#43a047','Marco':'#1e88e5','Giulia':'#8e24aa'};
+  let gridHtml='<div class="wlChartBox"><div class="wlChartTl">📊 Distribuzione Carico R per Persona</div><canvas id="wlChart" height="120"></canvas></div>';
+  TEAM.forEach(m=>{
+    const rc=rCount[m.nm]||0;const ac=aCount[m.nm]||0;const barPct=Math.round(rc/maxR*100);
+    const overload=rc>Math.ceil(qs.length/TEAM.length)+1;
+    const taskItems=allTasks[m.nm].map(q=>{
+      const stCls=['sTd','sDo','sRv','sDn','sPa'][q.st||0]||'sTd';
+      return`<div class="wlTaskItem"><span class="wlTaskTx">${q.t}</span><span class="stBadge ${stCls}" style="font-size:8px">${ST_LBL[q.st||0]}</span></div>`;
+    }).join('');
+    gridHtml+=`<div class="wlCard">
+      <div class="wlCardHead">
+        <div class="wlAvatar" style="background:${m.color}">${m.initials}</div>
+        <div><div class="wlName">${m.nm}</div><div class="wlRole ${m.defaultRole==='A'?'roleA':'roleR'}">${m.defaultRole==='A'?'🟠 Accountable':'🔴 Responsible'}</div></div>
+      </div>
+      <div class="wlBody">
+        <div class="wlStat"><span class="wlStatLbl">Task R assegnati</span><span class="wlStatVal">${rc}</span></div>
+        <div class="wlBar"><div class="wlBarF" style="width:${barPct}%;background:${m.color}"></div></div>
+        <div class="wlStat"><span class="wlStatLbl">Task A (approva)</span><span class="wlStatVal">${ac}</span></div>
+        <div class="wlStat"><span class="wlStatLbl">% carico</span><span class="wlStatVal" style="color:${overload?'#de350b':'#36b37e'}">${barPct}%</span></div>
+        <div class="overloadWarn ${overload?'show':''}">⚠️ Sovraccarico — distribuire task</div>
+        <div class="wlTaskList">${taskItems||'<div style="color:#97a0af;font-size:11px;padding:4px 0">Nessun task R assegnato</div>'}</div>
+        <button style="margin-top:8px;font-size:10px;padding:4px 10px;background:#e8f0fe;color:#0052cc;border:1px solid #c5d8fc;border-radius:4px;cursor:pointer;font-family:inherit" onclick="setUserByName('${m.nm}')">👤 Accedi come ${m.nm}</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('wlGrid').innerHTML=gridHtml;
+  // Build bar chart
+  setTimeout(()=>{
+    const canvas=document.getElementById('wlChart');if(!canvas)return;
+    if(wlChart){wlChart.destroy();wlChart=null;}
+    wlChart=new Chart(canvas,{
+      type:'bar',
+      data:{
+        labels:TEAM.map(m=>m.nm),
+        datasets:[
+          {label:'Task R (Responsible)',data:TEAM.map(m=>rCount[m.nm]||0),backgroundColor:TEAM.map(m=>m.color+'cc'),borderColor:TEAM.map(m=>m.color),borderWidth:2,borderRadius:4},
+          {label:'Task A (Accountable)',data:TEAM.map(m=>aCount[m.nm]||0),backgroundColor:TEAM.map(m=>m.color+'44'),borderColor:TEAM.map(m=>m.color),borderWidth:1.5,borderRadius:4}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},color:'#42526e'}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#6b778c'},grid:{color:'#f0f1f3'}},x:{ticks:{color:'#6b778c'},grid:{display:false}}}}
+    });
+  },80);
+}
+
+/* ═══════════════ AUDIT TRAIL ═══════════════════ */
+function buildAudit(){
+  const filter=document.getElementById('auFilter')?.value||'all';
+  const list=document.getElementById('auList');if(!list)return;
+  const filtered=filter==='all'?auditLog:auditLog.filter(e=>e.type===filter);
+  if(!filtered.length){list.innerHTML='<div class="auEmpty">Nessuna operazione registrata ancora.<br>Inizia a muovere i task per vedere il log.</div>';return;}
+  const stArrow=(f,t)=>`${ST_LBL[f]||'?'} → ${ST_LBL[t]||'?'}`;
+  const typeInfo={done:{cls:'auDotDone',badge:'auBDone',lbl:'COMPLETATO'},rework:{cls:'auDotRework',badge:'auBRework',lbl:'REWORK'},pa:{cls:'auDotPa',badge:'auBPa',lbl:'PENDING APPROVAL'},move:{cls:'auDotMove',badge:'auBMove',lbl:'SPOSTATO'}};
+  const roleClsMap={R:'roleR',A:'roleA',C:'roleC',I:'roleI'};
+  list.innerHTML=filtered.map(e=>{
+    const ti=typeInfo[e.type]||typeInfo.move;
+    const dt=new Date(e.ts);const dtStr=dt.toLocaleString('it-IT');
+    return`<div class="auEntry">
+      <div class="auDot ${ti.cls}"></div>
+      <div class="auLine">
+        <div><span class="auWho">${e.who}</span><span class="auRole ${roleClsMap[e.raciRole]||'roleI'}">${e.raciRole}</span><span class="auBadge ${ti.badge}">${ti.lbl}</span></div>
+        <div class="auWhat">ha spostato <span class="auTask">"${e.taskTitle}"</span><br><span style="color:#97a0af">${stArrow(e.fromSt,e.toSt)}</span></div>
+        <div class="auWhen">${dtStr}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════════ USER SWITCHER ═════════════════ */
+function buildUserModal(){
+  const list=document.getElementById('umList');if(!list)return;
+  list.innerHTML=TEAM.map(m=>`<div class="umItem ${m.nm===currentUser?'active':''}" onclick="setUserByName('${m.nm}')">
+    <div class="uAvatar" style="background:${m.color}">${m.initials}</div>
+    <div class="umInfo">
+      <div class="umNm">${m.nm}</div>
+      <div class="umRoles"><span class="uRole ${m.defaultRole==='A'?'roleA':'roleR'}">${m.defaultRole}</span></div>
+      <div style="font-size:10px;color:#6b778c;font-family:-apple-system,sans-serif">${m.desc}</div>
+    </div>
+    ${m.nm===currentUser?'<span style="color:#0052cc;font-size:14px">✓</span>':''}
+  </div>`).join('');
+}
+function toggleUserModal(){const m=document.getElementById('userModal');m.classList.toggle('on');if(m.classList.contains('on'))buildUserModal();}
+function setUserByName(nm){
+  const m=TEAM.find(x=>x.nm===nm);if(!m)return;
+  currentUser=nm;
+  document.getElementById('uAv').textContent=m.initials;document.getElementById('uAv').style.background=m.color;
+  document.getElementById('uNm').textContent=nm;
+  document.getElementById('uRl').textContent=m.defaultRole;
+  document.getElementById('uRl').className='uRole '+(m.defaultRole==='A'?'roleA':m.defaultRole==='R'?'roleR':m.defaultRole==='C'?'roleC':'roleI');
+  document.getElementById('userModal').classList.remove('on');
+  rebuildWork();
+  showWorkFlash('👤 Utente: '+nm+' ['+m.defaultRole+']','👤');
+
+  saveGameState();
+}
+let bdChart=null;
+
+function buildBurndown(){
+  const total=T().q.length;const days=7;
+  const ideal=Array.from({length:days+1},(_,i)=>Math.round(total*(1-i/days)));
+  // Simulate sprint: tasks completed over days
+  const now=Date.now();const sprintStart=now-6*86400000;
+  const actual=[];
+  for(let d=0;d<=days;d++){
+    const dayEnd=sprintStart+d*86400000;
+    const done=T().q.filter(q=>q.done_at&&q.done_at<dayEnd).length;
+    actual.push(total-done);
+  }
+  // For demo, show partial data (only up to today = day 6)
+  const actualSlice=[...actual];while(actualSlice.length<days+1)actualSlice.push(null);
+  // Fake some past completions for a realistic chart
+  const fakeActual=[total,total-0,total-0,total-1,total-1,total-2,null,null];
+  const doneCnt=T().q.filter(q=>q.st===3).length;if(doneCnt>0)fakeActual[6]=total-doneCnt;
+  document.getElementById('bdStat').textContent=`${doneCnt}/${total} task completati`;
+  const canvas=document.getElementById('burndownChart');
+  if(bdChart){bdChart.destroy();bdChart=null;}
+  bdChart=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels:['Inizio','Giorno 1','Giorno 2','Giorno 3','Giorno 4','Giorno 5','Oggi','Fine Sprint'],
+      datasets:[
+        {label:'Ideale',data:ideal,borderColor:'#c1c7d0',backgroundColor:'rgba(0,0,0,0)',borderDash:[6,4],borderWidth:2,pointRadius:3,tension:.3},
+        {label:'Reale',data:fakeActual,borderColor:'#0052cc',backgroundColor:'rgba(0,82,204,0.07)',borderWidth:2.5,pointRadius:4,pointBackgroundColor:'#0052cc',tension:.3,spanGaps:false}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:12},color:'#172b4d'}}},scales:{y:{title:{display:true,text:'Task Rimanenti',font:{size:11},color:'#42526e'},min:0,max:total+1,ticks:{stepSize:1,color:'#6b778c'},grid:{color:'#f0f1f3'}},x:{ticks:{color:'#6b778c'},grid:{color:'#f0f1f3'}}}}
+  });
+}
+/* ═══════════════ GANTT CHART ═══════════════════ */
+let ganttChart = null;
+
+function buildGantt() {
+  const qs = T().q;
+  
+  if (!qs || qs.length === 0) {
+    document.getElementById('gantt-target').innerHTML = '<div style="padding: 20px; text-align: center; color: #6b778c;">Nessun task disponibile per generare il Gantt.</div>';
+    return;
+  }
+
+  // Clear previous chart if it exists
+  document.getElementById('gantt-target').innerHTML = '';
+
+  // Transform your task data into the format expected by Frappe Gantt
+  const tasks = qs.map((q, index) => {
+    // We need dates for the Gantt. Since Trello might not always provide
+    // start dates, we'll estimate a start date based on 'due' or use defaults.
+    let end = q.due ? new Date(q.due) : new Date(Date.now() + (3 * 86400000)); // Default: 3 days from now
+    let start = new Date(end.getTime() - (2 * 86400000)); // Default: 2 days before end
+    
+    // Format dates as YYYY-MM-DD
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+    
+    // Calculate progress based on subtasks or status
+    let progress = 0;
+    if (q.st === 3) progress = 100; // Done
+    else if (q.subtasks && q.subtasks.length > 0) {
+       const doneSubtasks = q.subtasks.filter(s => s.done).length;
+       progress = Math.round((doneSubtasks / q.subtasks.length) * 100);
+    } else if (q.st === 1) progress = 50; // Doing
+
+    return {
+      id: 'Task ' + index,
+      name: q.t,
+      start: startStr,
+      end: endStr,
+      progress: progress,
+      custom_class: q.st === 3 ? 'bar-done' : (q.pri === 'U' || q.pri === 'H' ? 'bar-urgent' : 'bar-normal')
+    };
+  });
+
+  // Initialize the chart
+  ganttChart = new Gantt("#gantt-target", tasks, {
+    view_mode: 'Day',
+    language: 'it',
+    bar_height: 25,
+    padding: 18,
+    // Add custom colors based on the classes we assigned
+    custom_popup_html: function(task) {
+      return `
+        <div style="padding: 10px; background: white; border: 1px solid #ccc; border-radius: 4px; font-family: sans-serif;">
+          <strong>${task.name}</strong><br>
+          Progresso: ${task.progress}%<br>
+          Scadenza: ${task.end}
+        </div>
+      `;
+    }
+  });
+}
+
+/* ═══════════════ VICTORY ═══════════════════════ */
+function showVictory(){
+  stopAnim();stopEye();
+  const th=T();document.getElementById('vSub').textContent=th.name+' è stato sconfitto! La gilda trionfa!';
+  document.getElementById('vLootNm').textContent=th.loot;document.getElementById('vLootDesc').innerHTML=th.lootDesc;
+  document.getElementById('victScreen').classList.add('on');setTimeout(startCoins,300);
+}
+function openHR(){
+  const th=T();document.getElementById('hrProj').textContent=th.proj;document.getElementById('hrBoss').textContent=th.name;document.getElementById('hrLoot').textContent=th.loot;
+  document.getElementById('hrSubj').textContent='🏆 BOSS SCONFITTO — '+th.loot+' Sbloccato';document.getElementById('hrModal').classList.add('on');
+}
+
+/* ═══════════════ TABS & UTILS ══════════════════ */
+function swTab(t){
+  // Add 'g' to the tabs object
+  const tabs={k:'kbW',l:'lstW', g:'ganttW', b:'bdW',r:'raciW',w:'wlW',a:'auW'}; 
+  Object.entries(tabs).forEach(([k,id])=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=t===k?(k==='k'?'flex':'block'):'none';
+  });
+  // Add 'g' to the array of tabs to toggle active classes
+  ['k','l','g','b','r','w','a'].forEach(x=>{
+    const el=document.getElementById('tb'+x.toUpperCase());
+    if(el) el.classList.toggle('active',x===t);
+  });
+  
+  if(t==='b')buildBurndown();
+  if(t==='r')buildRaciDash();
+  if(t==='w')buildWorkload();
+  if(t==='a')buildAudit();
+  if(t==='g')buildGantt(); // Call the function to build the chart when the tab is clicked
+}
+function oMod(id){document.getElementById(id).classList.add('on');}
+function cMod(id){document.getElementById(id).classList.remove('on');}
+/* ═══════════════ MODAL TELEPORT SYSTEM ══════════════════ */
+let currentTeleportedElementId = null;
+
+function openModuleInModal(elementId, title) {
+  // 1. Apri il modale universale
+  document.getElementById('universalModal').classList.add('on');
+  document.getElementById('uniModalTitle').textContent = title;
+  
+  const contentArea = document.getElementById('uniModalContent');
+  const targetElement = document.getElementById(elementId);
+  
+  if (targetElement) {
+    // 2. Rendi visibile l'elemento originale (che era nascosto)
+    targetElement.style.display = elementId === 'kbW' ? 'flex' : 'block';
+    
+    // 3. Teletrasportalo dentro il modale!
+    contentArea.appendChild(targetElement);
+    currentTeleportedElementId = elementId;
+    
+    // 4. Esegui il render dei grafici se necessario
+    if(elementId === 'ganttW') buildGantt();
+    if(elementId === 'raciW') buildRaciDash();
+  }
+}
+
+function closeUniversalModal() {
+  document.getElementById('universalModal').classList.remove('on');
+  
+  // 1. Riporta a casa l'elemento teletrasportato
+  if (currentTeleportedElementId) {
+    const el = document.getElementById(currentTeleportedElementId);
+    if (el) {
+      el.style.display = 'none'; // Nascondilo di nuovo
+      document.getElementById('wv').appendChild(el); // Rimettilo nella Work View invisibile
+    }
+    currentTeleportedElementId = null;
+  }
+}
+
+// Assicurati che cliccare fuori dal modale universale lo chiuda richiamando la funzione corretta
+document.getElementById('universalModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('universalModal')) closeUniversalModal();
+});
+function setTheme(n){cur=n;['f','c','s'].forEach(t=>document.getElementById('t'+t.toUpperCase()).classList.toggle('act',t===n));cMod('tMod');resetG();}
+function resetG(){
+  T().q.forEach(q=>{q.st=0;q.boring=true;q.dmgDealt=0;q.doing_at=null;q.done_at=null;});
+  stab=0;mult=1;totDmg=0;lastDpsT=0;dpsCombo=0;
+  if(shTmr){clearInterval(shTmr);shTmr=null;}shActive=false;
+  document.getElementById('shBtn').classList.remove('shOn');document.getElementById('shBtn').disabled=false;document.getElementById('shCd').textContent='';
+  document.getElementById('shieldDome').classList.remove('active');
+  document.getElementById('mulD').className='m1';document.getElementById('mulV').textContent='1';
+  document.getElementById('victScreen').classList.remove('on');document.getElementById('hrModal').classList.remove('on');
+  document.getElementById('lootNm').textContent='🏆 '+T().loot;document.getElementById('bossName').textContent=T().name;
+  closeDetail();updateBars(0);rebuildWork();
+  const bgC=document.getElementById('bgCanvas');drawBg(bgC,cur);
+  const bCtx=document.getElementById('bossCanvas').getContext('2d');PAINTERS[cur](bCtx,0);
+  paintHero(document.getElementById('heroCanvas').getContext('2d'));
+  buildBossHP();buildStab();buildParty();buildQL();buildFog();startAnim();startEye();
+
+  saveGameState();
+}
+
+function backW(){stopAnim();stopEye();document.getElementById('gv').classList.remove('on');document.getElementById('wv').style.display='flex';}
+function startTrans(){
+  document.getElementById('userModal').classList.remove('on');
+  document.getElementById('wv').style.display='none';const tv=document.getElementById('transOv');tv.classList.add('on');
+  const bar=document.getElementById('transBarFl');bar.style.animation='none';void bar.offsetWidth;bar.style.animation='tLoad 1.5s ease forwards';
+  setTimeout(()=>{tv.classList.remove('on');document.getElementById('gv').classList.add('on');
+    setTimeout(()=>{const bgC=document.getElementById('bgCanvas');bgC.width=bgC.offsetWidth;bgC.height=bgC.offsetHeight;drawBg(bgC,cur);const bCtx=document.getElementById('bossCanvas').getContext('2d');PAINTERS[cur](bCtx,0);paintHero(document.getElementById('heroCanvas').getContext('2d'));resetG();},60);},1700);
+}
+
+/* ═══════════════ TRELLO SYNC ═══════════════════ */
+async function syncFromTrello() {
+  try {
+    await loadGameState();
+
+    const lists = await t.lists('all');
+    const cards = await t.cards('all');
+
+    if (!lists || lists.length === 0) return;
+
+    // Ordina le liste da sinistra a destra e salvale nella cache globale
+    lists.sort((a, b) => a.pos - b.pos);
+    trelloListsCache = lists.map(l => l.id); 
+    trelloListNames = lists.map(l => l.name.toUpperCase()); // Salviamo anche i nomi in maiuscolo
+
+    T().q = cards.map(c => {
+      // Troviamo in che colonna si trova attualmente (da 0 a X)
+      let state = trelloListsCache.indexOf(c.idList);
+      if (state === -1) state = 1; // Fallback
+
+      return {
+        idTrello: c.id,  // FONDAMENTALE: Salviamo l'ID reale della Card
+        t: c.name, 
+        ep: 'Trello Task', 
+        cls: 'DPS', 
+        d: 2, 
+        s: 0,
+        raci: { R: '-', A: '-', C: '-', I: '-' },
+        est: '-', spent: '-',
+        pri: 'M', type: 'task',
+        tag: 'tD', tagL: 'TRELLO',
+        st: state,
+        cover: null,
+        subtasks: [], comments: [],
+        due: '', doing_at: null, done_at: null, dmgDealt: 0, boring: true
+      };
+    });
+
+    rebuildWork();
+    if (document.getElementById('gv').classList.contains('on')) {
+      buildQL();
+    }
+    
+    // Calcoliamo i danni contando le card nell'ultima lista a destra
+    const doneCount = T().q.filter(q => q.st === trelloListsCache.length - 1).length;
+    totDmg = doneCount * 2; 
+    updateBars(doneCount);
+    buildBossHP();
+
+  } catch(e) {
+    console.error("Errore di sincronizzazione con Trello:", e);
+  }
+}
+/* ═══════════════ INIT ══════════════════════════ */
+window.addEventListener('load',()=>{
+  
+  // 1. Assicurati che Work View sia nascosta e Game View sia accesa
+  const wv = document.getElementById('wv');
+  if(wv) wv.style.display='none';
+  
+  const gv = document.getElementById('gv');
+  if(gv) {
+    gv.style.display='flex';
+    gv.classList.add('on');
+  }
+  
+  // Rimuovi l'animazione di transizione rossa
+  const tv = document.getElementById('transOv');
+  if(tv) tv.style.display = 'none';
+
+  // 2. Aggiorna l'header con l'utente attuale
+  const m = TEAM.find(x => x.nm === currentUser) || TEAM[0];
+  const uAv = document.getElementById('uAv');
+  if(uAv) {
+    uAv.textContent = m.initials;
+    uAv.style.background = m.color;
+  }
+
+  // 3. Avvia la grafica di base del gioco per non vedere schermo nero
+  setTimeout(()=>{
+    const bgC=document.getElementById('bgCanvas');
+    if(bgC){ 
+      bgC.width=bgC.offsetWidth; 
+      bgC.height=bgC.offsetHeight; 
+      drawBg(bgC,cur); 
+    }
+    const bossC=document.getElementById('bossCanvas');
+    if(bossC) { 
+      const bCtx=bossC.getContext('2d'); 
+      PAINTERS[cur](bCtx,0); 
+    }
+    const heroC=document.getElementById('heroCanvas');
+    if(heroC) paintHero(heroC.getContext('2d'));
+    
+    startAnim();
+    startEye();
+  }, 100);
+
+  // 4. Avvia la lettura da Trello!
+  syncFromTrello();
+});
+// Eventi globali per la UI che erano stati cancellati
+window.addEventListener('resize',()=>{
+  if(document.getElementById('gv').classList.contains('on')){const bgC=document.getElementById('bgCanvas');bgC.width=bgC.offsetWidth;bgC.height=bgC.offsetHeight;drawBg(bgC,cur);}
+});
+
+document.addEventListener('click',e=>{
+  const um=document.getElementById('userModal');const us=document.getElementById('userSwitcher');
+  if(um&&um.classList.contains('on')&&!um.contains(e.target)&&!us.contains(e.target))um.classList.remove('on');
+});
+
+document.querySelectorAll('.tMod,#hrModal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on');}));
+document.getElementById('detailPanel').addEventListener('click',e=>e.stopPropagation());
+</script>
+</body>
+</html>
