@@ -4,7 +4,7 @@
   "capabilities": [
     "board-buttons"
   ],
-  "connectorUrl": " https://gianmariadri-sudo.github.io/adventures-trello",
+  "connectorUrl": "https://gianmariadri-sudo.github.io/adventures-trello/Plugin%20trello/connector.html",
   "icon": {
     "url": "https://cdn-icons-png.flaticon.com/512/2618/2618245.png"
   },
